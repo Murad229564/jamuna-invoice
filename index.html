@@ -2245,6 +2245,12 @@
           <span id="notifBadge"
             style="display:none;position:absolute;top:-3px;right:-3px;background:var(--cr);color:white;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;"></span>
         </div>
+        <div style="position:relative;display:inline-flex;">
+          <button class="tbtn ghost" onclick="openSupportChat()" id="chatBtn"
+            style="padding:4px 9px;font-size:13px;">💬</button>
+          <span id="chatBadge"
+            style="display:none;position:absolute;top:-3px;right:-3px;background:#f59e0b;color:white;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;"></span>
+        </div>
         <div class="user-chip" id="userChip" onclick="toggleUD()" style="position:relative;z-index:1000;">
           <span id="userLbl">—</span>
           <span class="rtag" id="roleLbl">user</span>
@@ -3103,7 +3109,157 @@
       ['r_name', 'r_uid', 'r_pwd', 'r_branch', 'r_email'].forEach(id => document.getElementById(id).value = '');
     }
 
-    function doLogout() {
+
+    /* ═══════════════════════════════════════════
+       LIVE SUPPORT CHAT — Firebase ji_chat
+    ═══════════════════════════════════════════ */
+    let _chatUnsub = null;
+    let _chatTargetUid = null; // admin এর জন্য: কোন user এর chat দেখছে
+
+    function openSupportChat() {
+      const panel = document.getElementById('chatPanel');
+      panel.style.display = 'flex';
+      const isAdmin = CU?.role === 'admin';
+      if (isAdmin) {
+        document.getElementById('chatAdminUserBar').style.display = 'block';
+        document.getElementById('chatPanelTitle').textContent = 'Support Chat — Admin';
+        document.getElementById('chatPanelSub').textContent = 'User select করে reply করুন';
+        loadChatUserList();
+      } else {
+        document.getElementById('chatAdminUserBar').style.display = 'none';
+        document.getElementById('chatPanelTitle').textContent = 'Support Chat';
+        document.getElementById('chatPanelSub').textContent = 'Admin এর সাথে কথা বলুন';
+        _chatTargetUid = CU.uid;
+        listenChat(CU.uid);
+        clearChatBadge(CU.uid);
+      }
+    }
+
+    function closeSupportChat() {
+      document.getElementById('chatPanel').style.display = 'none';
+      if (_chatUnsub) { _chatUnsub(); _chatUnsub = null; }
+      _chatTargetUid = null;
+    }
+
+    async function loadChatUserList() {
+      const users = getUsers().filter(u => u.role !== 'admin');
+      const sel = document.getElementById('chatUserSelect');
+      sel.innerHTML = '<option value="">-- User select করুন --</option>';
+      for (const u of users) {
+        const opt = document.createElement('option');
+        opt.value = u.uid;
+        opt.textContent = (u.name || u.uid) + ' (' + u.uid + ')';
+        sel.appendChild(opt);
+      }
+    }
+
+    function switchChatUser(uid) {
+      if (!uid) return;
+      _chatTargetUid = uid;
+      if (_chatUnsub) { _chatUnsub(); _chatUnsub = null; }
+      listenChat(uid);
+      clearChatBadge(uid);
+    }
+
+    function listenChat(roomUid) {
+      const msgDiv = document.getElementById('chatMessages');
+      msgDiv.innerHTML = '<div style="text-align:center;color:#94a3b8;font-size:12px;padding:16px;">Loading...</div>';
+      _chatUnsub = _fdb.collection('ji_chat').doc(roomUid)
+        .collection('messages').orderBy('time', 'asc')
+        .onSnapshot(snap => {
+          renderChatMessages(snap.docs.map(d => ({ ...d.data(), _id: d.id })));
+        }, e => {
+          msgDiv.innerHTML = '<div style="text-align:center;color:#ef4444;font-size:12px;padding:16px;">Chat load failed.</div>';
+        });
+    }
+
+    function renderChatMessages(msgs) {
+      const div = document.getElementById('chatMessages');
+      if (!msgs.length) {
+        div.innerHTML = '<div style="text-align:center;color:#94a3b8;font-size:12px;padding:20px;">এখনো কোনো message নেই। প্রথমে message পাঠান।</div>';
+        return;
+      }
+      div.innerHTML = msgs.map(m => {
+        const isMine = m.from === CU.uid;
+        const time = (m.time || '').slice(11, 16);
+        return `<div style="display:flex;flex-direction:column;align-items:${isMine ? 'flex-end' : 'flex-start'};">
+          <div style="max-width:80%;background:${isMine ? 'var(--c1)' : 'white'};color:${isMine ? 'white' : 'var(--txt)'};border-radius:${isMine ? '12px 12px 3px 12px' : '12px 12px 12px 3px'};padding:8px 11px;font-size:12.5px;line-height:1.4;box-shadow:0 1px 3px rgba(0,0,0,.08);">
+            ${m.text || ''}
+          </div>
+          <div style="font-size:10px;color:#94a3b8;margin-top:2px;">${m.fromName || m.from} · ${time}</div>
+        </div>`;
+      }).join('');
+      div.scrollTop = div.scrollHeight;
+    }
+
+    async function sendChatMsg() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      if (!_chatTargetUid) { toast('Chat room নির্বাচন করুন।', 'e'); return; }
+      input.value = '';
+      const msg = {
+        from: CU.uid,
+        fromName: CU.name || CU.uid,
+        text: text,
+        time: new Date().toISOString(),
+        role: CU.role
+      };
+      try {
+        await _fdb.collection('ji_chat').doc(_chatTargetUid)
+          .collection('messages').add(msg);
+        // Notification badge update — unread count
+        const roomRef = _fdb.collection('ji_chat').doc(_chatTargetUid);
+        const isAdmin = CU.role === 'admin';
+        if (isAdmin) {
+          // Admin message → user এর unread বাড়াও
+          await roomRef.set({ userUnread: firebase.firestore.FieldValue.increment(1), lastMsg: text, lastTime: msg.time }, { merge: true });
+        } else {
+          // User message → admin এর unread বাড়াও
+          await roomRef.set({ adminUnread: firebase.firestore.FieldValue.increment(1), lastMsg: text, lastTime: msg.time, userName: CU.name || CU.uid }, { merge: true });
+        }
+      } catch(e) { toast('Message পাঠানো ব্যর্থ হয়েছে।', 'e'); console.error(e); }
+    }
+
+    async function clearChatBadge(roomUid) {
+      try {
+        const isAdmin = CU?.role === 'admin';
+        const field = isAdmin ? 'adminUnread' : 'userUnread';
+        await _fdb.collection('ji_chat').doc(roomUid).set({ [field]: 0 }, { merge: true });
+      } catch(e) {}
+    }
+
+    // Chat badge polling — 15s interval
+    function startChatBadgePoller() {
+      if (!CU) return;
+      updateChatBadge();
+      setInterval(updateChatBadge, 15000);
+    }
+
+    async function updateChatBadge() {
+      if (!CU) return;
+      const badge = document.getElementById('chatBadge');
+      if (!badge) return;
+      try {
+        const isAdmin = CU.role === 'admin';
+        if (isAdmin) {
+          // Admin: সব user এর adminUnread যোগ করো
+          const snap = await _fdb.collection('ji_chat').get();
+          let total = 0;
+          snap.forEach(d => { total += (d.data().adminUnread || 0); });
+          badge.textContent = total;
+          badge.style.display = total > 0 ? 'flex' : 'none';
+        } else {
+          // User: নিজের room এর userUnread
+          const doc = await _fdb.collection('ji_chat').doc(CU.uid).get();
+          const unread = doc.exists ? (doc.data().userUnread || 0) : 0;
+          badge.textContent = unread;
+          badge.style.display = unread > 0 ? 'flex' : 'none';
+        }
+      } catch(e) {}
+    }
+
+        function doLogout() {
       addAudit(CU?.uid || '?', 'LOGOUT', 'User signed out');
       clearSessionTimers();
       closeSessionWarning();
@@ -3173,6 +3329,7 @@
       }
       startSessionTimer();
       initActivityTracking();
+      startChatBadgePoller(); // Chat badge শুরু করো
       rowId = 0; addRow(); calc(); goPage('invoice');
     }
 
@@ -4556,6 +4713,18 @@
           status: 'pending'
         };
         await addReqDoc(req);
+        // Admin notification for delete request
+        const allReqsNow = getReqs();
+        const thisDelReq = allReqsNow.find(r => r.field === 'DELETE_REQUEST' && r.invNo === invNo && r.from === (CU?.uid||'?') && r.status === 'pending');
+        try {
+          await _fdb.collection('ji_notifications').add({
+            to: 'admin', type: 'delete_request',
+            title: '🗑 Invoice Delete Request',
+            body: '"' + (CU.name||CU.uid) + '" invoice ' + invNo + ' delete করতে চাইছে। কারণ: ' + reason.slice(0,80),
+            time: new Date().toISOString(), readBy: [], sentBy: CU?.uid||'?',
+            reqId: thisDelReq?._id || null, invNo: invNo
+          });
+        } catch(notifErr) { console.warn('Del req notif failed', notifErr); }
         addAudit(CU.uid, 'DELETE_REQUEST', 'Delete request for invoice ' + invNo + ': ' + reason);
         toast('Delete request পাঠানো হয়েছে। Admin approve করলে delete হবে।', 's', 4000);
         return true;
@@ -5117,6 +5286,81 @@
 
     /* ─── Admin: User Actions ─── */
     async function appUser(uid) { const u = getUsers(), x = u.find(v => v.uid === uid); if (x) { x.status = 'active'; await upsertUser(x); addAudit(CU.uid, 'USER_APPROVE', uid + ' approved'); renderAdmUsers(); renderAdmin(); toast(uid + ' approved.', 's'); } }
+
+    async function notifQuickApprove(notifId, uid, btn, type, invNo, reqId) {
+      if (type === 'delete_request') {
+        // Invoice delete approve
+        btn.disabled = true; btn.textContent = '...';
+        const allReqsNow = getReqs();
+        const req = allReqsNow.find(r => r._id === reqId || (r.field === 'DELETE_REQUEST' && r.invNo === invNo && r.status === 'pending'));
+        if (req) {
+          req.status = 'approved'; req.resolvedAt = new Date().toISOString(); req.resolvedBy = CU.uid;
+          const iv = getInvs().find(x => x.invNo === invNo);
+          if (iv) { iv.deleted = true; iv.deletedBy = req.from; iv.deletedAt = new Date().toISOString(); iv.deleteReason = req.msg; iv.deleteApprovedBy = CU.uid; await setInv(iv); }
+          if (req._id) await _fdb.collection('ji_requests').doc(req._id).update({ status: 'approved', resolvedAt: req.resolvedAt, resolvedBy: req.resolvedBy });
+          addAudit(CU.uid, 'INVOICE_DELETE_APPROVED', 'Delete approved for ' + invNo + ' via notification');
+          await sendNotification(req.from, 'delete_approved', 'Delete Request Approved', 'Invoice ' + invNo + ' delete approved by admin.');
+        }
+        try { await _fdb.collection('ji_notifications').doc(notifId).update({ actionTaken: 'approved', readBy: firebase.firestore.FieldValue.arrayUnion(CU.uid) }); } catch(e) {}
+        toast('✔ Invoice ' + invNo + ' delete approved!', 's');
+        renderAdmReqs(); renderHist();
+        await renderNotifications();
+        return;
+      }
+      // new_registration approve
+      if (!uid) { toast('User ID খুঁজে পাওয়া যায়নি।', 'e'); return; }
+      const u = getUsers(), x = u.find(v => v.uid === uid);
+      if (!x) { toast('User "' + uid + '" আর নেই — হয়তো আগেই delete হয়েছে।', 'e'); return; }
+      if (x.status === 'active') { toast(uid + ' ইতিমধ্যে approved!', 'w'); return; }
+      btn.disabled = true; btn.textContent = '...';
+      x.status = 'active';
+      await upsertUser(x);
+      addAudit(CU.uid, 'USER_APPROVE', uid + ' approved via notification');
+      try { await _fdb.collection('ji_notifications').doc(notifId).update({ actionTaken: 'approved', readBy: firebase.firestore.FieldValue.arrayUnion(CU.uid) }); } catch (e) { console.warn('notif update failed', e); }
+      renderAdmUsers(); renderAdmin();
+      toast('✔ ' + uid + ' approved!', 's');
+      await renderNotifications();
+    }
+
+    async function notifQuickReject(notifId, uid, btn, type, invNo, reqId) {
+      if (type === 'delete_request') {
+        cfmShow({
+          icon: '🗑️', title: 'Reject Delete Request?',
+          msg: `Invoice <strong>${invNo}</strong> এর delete request reject করবেন?`,
+          okLabel: 'Reject', okColor: 'var(--cr)',
+          cb: async () => {
+            const allReqsNow = getReqs();
+            const req = allReqsNow.find(r => r._id === reqId || (r.field === 'DELETE_REQUEST' && r.invNo === invNo && r.status === 'pending'));
+            if (req) {
+              req.status = 'rejected'; req.resolvedAt = new Date().toISOString(); req.resolvedBy = CU.uid;
+              if (req._id) await _fdb.collection('ji_requests').doc(req._id).update({ status: 'rejected', resolvedAt: req.resolvedAt, resolvedBy: req.resolvedBy });
+              addAudit(CU.uid, 'INVOICE_DELETE_REJECTED', 'Delete rejected for ' + invNo + ' via notification');
+              await sendNotification(req.from, 'delete_rejected', 'Delete Request Rejected', 'Invoice ' + invNo + ' delete request rejected by admin.');
+            }
+            try { await _fdb.collection('ji_notifications').doc(notifId).update({ actionTaken: 'rejected', readBy: firebase.firestore.FieldValue.arrayUnion(CU.uid) }); } catch(e) {}
+            toast('✖ Invoice ' + invNo + ' delete rejected.', 'e');
+            renderAdmReqs();
+            await renderNotifications();
+          }
+        });
+        return;
+      }
+      // new_registration reject
+      if (!uid) { toast('User ID খুঁজে পাওয়া যায়নি।', 'e'); return; }
+      cfmShow({
+        icon: '👤', title: 'Reject & Delete User?',
+        msg: `<strong>${uid}</strong> কে reject করবেন? User টি delete হয়ে যাবে।`,
+        okLabel: 'Reject & Delete', okColor: 'var(--cr)',
+        cb: async () => {
+          const u = getUsers(), x = u.find(v => v.uid === uid);
+          if (x) { await removeUser(uid); addAudit(CU.uid, 'USER_REJECT', uid + ' rejected via notification'); }
+          try { await _fdb.collection('ji_notifications').doc(notifId).update({ actionTaken: 'rejected', readBy: firebase.firestore.FieldValue.arrayUnion(CU.uid) }); } catch (e) { console.warn('notif update failed', e); }
+          renderAdmUsers(); renderAdmin();
+          toast('✖ ' + uid + ' rejected.', 'e');
+          await renderNotifications();
+        }
+      });
+    }
     async function togUser(uid, st) { const u = getUsers(), x = u.find(v => v.uid === uid); if (x) { x.status = st; await upsertUser(x); addAudit(CU.uid, 'USER_STATUS', uid + ' → ' + st); renderAdmUsers(); renderAdmin(); toast(uid + ' → ' + st, 'w'); } }
     function delUser(uid) {
       cfmShow({
@@ -5218,12 +5462,32 @@
       if (empty) empty.style.display = 'none';
       const unread = notifs.filter(n => !n.readBy?.includes(CU.uid));
       updateNotifBadge(unread.length);
+      const isAdmin = CU?.role === 'admin';
       list.innerHTML = notifs.map(n => {
         const isUnread = !n.readBy?.includes(CU.uid);
         const icon = {
           'broadcast': '📢', 'delete_approved': '✅', 'delete_rejected': '❌',
-          'restore': '↩', 'system': 'ℹ', 'pwd_reset': '🔑', 'info': '📋'
+          'restore': '↩', 'system': 'ℹ', 'pwd_reset': '🔑', 'info': '📋', 'new_registration': '👤'
         }[n.type] || '🔔';
+        let actionHtml = '';
+        if ((n.type === 'new_registration' || n.type === 'delete_request') && isAdmin) {
+          if (n.actionTaken === 'approved') {
+            actionHtml = `<div style="margin-top:7px;"><span style="font-size:11px;color:#16a34a;font-weight:700;background:#dcfce7;padding:3px 10px;border-radius:20px;">✔ Approved</span></div>`;
+          } else if (n.actionTaken === 'rejected') {
+            actionHtml = `<div style="margin-top:7px;"><span style="font-size:11px;color:#dc2626;font-weight:700;background:#fee2e2;padding:3px 10px;border-radius:20px;">✖ Rejected</span></div>`;
+          } else {
+            const approveArgs = n.type === 'delete_request'
+              ? `'${n._id}',null,this,'delete_request','${n.invNo}','${n.reqId}'`
+              : `'${n._id}','${n.sentBy}',this`;
+            const rejectArgs = n.type === 'delete_request'
+              ? `'${n._id}',null,this,'delete_request','${n.invNo}','${n.reqId}'`
+              : `'${n._id}','${n.sentBy}',this`;
+            actionHtml = `<div style="margin-top:8px;display:flex;gap:6px;" onclick="event.stopPropagation()">
+              <button onclick="notifQuickApprove(${approveArgs})" style="font-size:11.5px;font-weight:700;background:#16a34a;color:#fff;border:none;border-radius:6px;padding:5px 13px;cursor:pointer;">✔ Approve</button>
+              <button onclick="notifQuickReject(${rejectArgs})" style="font-size:11.5px;font-weight:700;background:#dc2626;color:#fff;border:none;border-radius:6px;padding:5px 13px;cursor:pointer;">✖ Reject</button>
+            </div>`;
+          }
+        }
         return `<div onclick="readNotif('${n._id}',this)" style="padding:11px 14px;border-bottom:1px solid var(--bdr);cursor:pointer;background:${isUnread ? '#eff6ff' : 'white'};transition:background .15s;">
           <div style="display:flex;align-items:flex-start;gap:8px;">
             <span style="font-size:17px;flex-shrink:0;">${icon}</span>
@@ -5231,6 +5495,7 @@
               <div style="font-size:12.5px;font-weight:${isUnread ? '700' : '500'};color:var(--txt);line-height:1.4;">${n.title || 'Notification'}</div>
               <div style="font-size:11.5px;color:var(--txt2);margin-top:2px;line-height:1.4;">${n.body || ''}</div>
               <div style="font-size:10.5px;color:var(--txt3);margin-top:4px;">${(n.time || '').slice(0, 16).replace('T', ' ')}</div>
+              ${actionHtml}
             </div>
             ${isUnread ? '<span style="width:7px;height:7px;background:var(--c1);border-radius:50%;flex-shrink:0;margin-top:4px;"></span>' : ''}
           </div>
@@ -5255,6 +5520,7 @@
       const unread = notifs.filter(n => !n.readBy?.includes(CU.uid));
       updateNotifBadge(unread.length);
 
+      const isAdmin = CU?.role === 'admin';
       list.innerHTML = notifs.map(n => {
         const isUnread = !n.readBy?.includes(CU.uid);
         const icon = {
@@ -5264,8 +5530,28 @@
           'restore': '↩',
           'system': 'ℹ',
           'pwd_reset': '🔑',
-          'info': '📋'
+          'info': '📋',
+          'new_registration': '👤'
         }[n.type] || '🔔';
+        let actionHtml = '';
+        if ((n.type === 'new_registration' || n.type === 'delete_request') && isAdmin) {
+          if (n.actionTaken === 'approved') {
+            actionHtml = `<div style="margin-top:7px;"><span style="font-size:11px;color:#16a34a;font-weight:700;background:#dcfce7;padding:3px 10px;border-radius:20px;">✔ Approved</span></div>`;
+          } else if (n.actionTaken === 'rejected') {
+            actionHtml = `<div style="margin-top:7px;"><span style="font-size:11px;color:#dc2626;font-weight:700;background:#fee2e2;padding:3px 10px;border-radius:20px;">✖ Rejected</span></div>`;
+          } else {
+            const approveArgs = n.type === 'delete_request'
+              ? `'${n._id}',null,this,'delete_request','${n.invNo}','${n.reqId}'`
+              : `'${n._id}','${n.sentBy}',this`;
+            const rejectArgs = n.type === 'delete_request'
+              ? `'${n._id}',null,this,'delete_request','${n.invNo}','${n.reqId}'`
+              : `'${n._id}','${n.sentBy}',this`;
+            actionHtml = `<div style="margin-top:8px;display:flex;gap:6px;" onclick="event.stopPropagation()">
+              <button onclick="notifQuickApprove(${approveArgs})" style="font-size:11.5px;font-weight:700;background:#16a34a;color:#fff;border:none;border-radius:6px;padding:5px 13px;cursor:pointer;">✔ Approve</button>
+              <button onclick="notifQuickReject(${rejectArgs})" style="font-size:11.5px;font-weight:700;background:#dc2626;color:#fff;border:none;border-radius:6px;padding:5px 13px;cursor:pointer;">✖ Reject</button>
+            </div>`;
+          }
+        }
         return `
       <div onclick="readNotif('${n._id}',this)" style="padding:11px 14px;border-bottom:1px solid var(--bdr);cursor:pointer;background:${isUnread ? '#eff6ff' : 'white'};transition:background .15s;">
         <div style="display:flex;align-items:flex-start;gap:8px;">
@@ -5274,6 +5560,7 @@
             <div style="font-size:12.5px;font-weight:${isUnread ? '700' : '500'};color:var(--txt);line-height:1.4;">${n.title || 'Notification'}</div>
             <div style="font-size:11.5px;color:var(--txt2);margin-top:2px;line-height:1.4;">${n.body || ''}</div>
             <div style="font-size:10.5px;color:var(--txt3);margin-top:4px;">${(n.time || '').slice(0, 16).replace('T', ' ')}</div>
+            ${actionHtml}
           </div>
           ${isUnread ? '<span style="width:7px;height:7px;background:var(--c1);border-radius:50%;flex-shrink:0;margin-top:4px;"></span>' : ''}
         </div>
@@ -5685,6 +5972,39 @@
     </button>
   </div>
 
+
+  <!-- ═══════════ SUPPORT CHAT ═══════════ -->
+  <div id="chatPanel" style="display:none;position:fixed;bottom:0;right:20px;width:340px;height:460px;background:white;border-radius:12px 12px 0 0;box-shadow:0 -4px 30px rgba(0,0,0,.18);z-index:9999;display:none;flex-direction:column;overflow:hidden;border:1px solid #e2e8f0;">
+    <!-- Header -->
+    <div style="background:var(--c1);padding:11px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:16px;">💬</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:white;" id="chatPanelTitle">Support Chat</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.75);" id="chatPanelSub">Admin এর সাথে কথা বলুন</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <div id="chatOnlineDot" style="width:8px;height:8px;background:#4ade80;border-radius:50%;"></div>
+        <button onclick="closeSupportChat()" style="background:rgba(255,255,255,.2);border:none;color:white;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px;">✕</button>
+      </div>
+    </div>
+    <!-- Admin: user selector -->
+    <div id="chatAdminUserBar" style="display:none;padding:8px 12px;border-bottom:1px solid #e2e8f0;background:#f8fafc;">
+      <select id="chatUserSelect" onchange="switchChatUser(this.value)" style="width:100%;font-size:12.5px;padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;background:white;color:var(--txt);">
+        <option value="">-- User select করুন --</option>
+      </select>
+    </div>
+    <!-- Messages -->
+    <div id="chatMessages" style="flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px;background:#f8fafc;min-height:0;"></div>
+    <!-- Input -->
+    <div style="padding:10px 12px;border-top:1px solid #e2e8f0;background:white;flex-shrink:0;display:flex;gap:7px;align-items:flex-end;">
+      <textarea id="chatInput" placeholder="Message লিখুন..." rows="2"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMsg();}"
+        style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:12.5px;font-family:var(--f);resize:none;color:var(--txt);background:#f8fafc;"></textarea>
+      <button onclick="sendChatMsg()" style="background:var(--c1);color:white;border:none;border-radius:8px;padding:8px 13px;font-size:15px;cursor:pointer;flex-shrink:0;">➤</button>
+    </div>
+  </div>
 </body>
 
 </html>
