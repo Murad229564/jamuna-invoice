@@ -241,6 +241,8 @@
       display: none;
       height: 100vh;
       max-height: 100vh;
+      width: 100vw;
+      max-width: 100vw;
       flex-direction: column;
       overflow: hidden;
     }
@@ -252,11 +254,14 @@
       color: white;
       display: flex;
       align-items: center;
-      padding: 0 14px;
-      gap: 10px;
+      padding: 0 12px;
+      gap: 6px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, .25);
       flex-shrink: 0;
       z-index: 200;
+      width: 100%;
+      overflow: visible;
+      position: relative;
     }
 
     .topbar-brand {
@@ -433,8 +438,12 @@
       box-shadow: var(--sh2);
       border: 1px solid var(--bdr);
       min-width: 170px;
-      z-index: 600;
+      z-index: 9999;
       display: none;
+    }
+
+    .udrop.open {
+      display: block;
     }
 
     .udrop.open {
@@ -498,23 +507,27 @@
       flex: 1;
       overflow: hidden;
       min-height: 0;
+      width: 100%;
     }
 
     /* ─── SIDEBAR ─── */
     .sidebar {
       width: var(--sw);
       min-width: var(--sw);
+      max-width: var(--sw);
       background: var(--sb);
       border-right: 1px solid var(--bdr);
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      flex-shrink: 0;
     }
 
     .sb-scroll {
       flex: 1;
       overflow-y: auto;
       overflow-x: hidden;
+      min-height: 0;
     }
 
     .sb-scroll::-webkit-scrollbar {
@@ -744,6 +757,7 @@
       overflow: hidden;
       min-height: 0;
       min-width: 0;
+      max-width: 100%;
       background: var(--card);
     }
 
@@ -1917,68 +1931,10 @@
     }
 
     @media(max-width:900px) {
-      :root {
-        --sw: 0px;
-      }
 
-      .topbar-brand {
-        width: auto;
-        min-width: unset;
-      }
-
-      .navtabs {
-        padding-left: 14px;
-      }
-
-      .inv-pills {
-        display: none;
-      }
-
+      /* Mobile এ desktop view — কোনো change নেই */
       .stat-grid {
         grid-template-columns: 1fr 1fr;
-      }
-
-      /* Sidebar — default hidden, slide in হবে */
-      .sidebar {
-        display: flex;
-        position: fixed;
-        top: var(--h);
-        left: 0;
-        bottom: 0;
-        width: 260px;
-        z-index: 400;
-        transform: translateX(-100%);
-        transition: transform .25s ease;
-        box-shadow: 4px 0 20px rgba(0, 0, 0, .18);
-      }
-
-      .sidebar.mob-open {
-        transform: translateX(0);
-      }
-
-      /* Sidebar backdrop */
-      #mobSidebarDim {
-        display: none;
-        position: fixed;
-        inset: 0;
-        top: var(--h);
-        background: rgba(0, 0, 0, .35);
-        z-index: 390;
-      }
-
-      #mobSidebarDim.on {
-        display: block;
-      }
-
-      /* Main full width on mobile */
-      .main {
-        width: 100%;
-      }
-
-      /* Page content scroll on mobile */
-      .page-wrap {
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
       }
     }
   </style>
@@ -2023,15 +1979,10 @@
 
   <!-- ═══════════ APP ═══════════ -->
   <div id="app">
-    <div id="mobSidebarDim" onclick="closeMobSidebar()"></div>
     <!-- TOPBAR — single, clean -->
-    <div class="topbar" style="padding:0 12px;gap:8px;align-items:center;">
+    <div class="topbar"
+      style="padding:0 12px;gap:6px;align-items:center;overflow:visible;min-width:0;position:relative;">
       <!-- Logo -->
-      <!-- Mobile sidebar toggle — only shows on mobile -->
-      <button id="mobMenuBtn" onclick="toggleMobSidebar()"
-        style="display:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:6px;color:white;font-size:16px;padding:4px 9px;cursor:pointer;flex-shrink:0;">
-        ☰
-      </button>
       <div style="display:flex;flex-direction:column;align-items:flex-start;gap:0;flex-shrink:0;padding:3px 0;">
         <img src="https://jeal.jamuna.tech/Assets/lib/CommonUI/images/jamuna-logo.PNG" alt="Jamuna"
           style="height:26px;object-fit:contain;" onerror="this.style.display='none'">
@@ -2048,20 +1999,21 @@
             style="font-size:10.5px;color:rgba(255,255,255,.85);">—</span></div>
       </div>
       <!-- Spacer -->
-      <div style="flex:1;"></div>
+      <div style="flex:1;min-width:0;overflow:hidden;"></div>
       <!-- Right buttons -->
-      <div class="tbar-right" style="gap:5px;flex-shrink:0;">
+      <div class="tbar-right" style="gap:5px;flex-shrink:0;overflow:visible;padding-right:12px;">
         <button class="tbtn ghost" onclick="goPage('invoice')"
-          style="border:1px solid rgba(255,255,255,.3);padding:4px 10px;font-size:11.5px;background:rgba(34,197,94,.18);border-color:rgba(34,197,94,.4);color:#86efac;font-weight:700;">🧾
+          style="border:1px solid rgba(255,255,255,.3);padding:4px 8px;font-size:11px;background:rgba(34,197,94,.18);border-color:rgba(34,197,94,.4);color:#86efac;font-weight:700;">🧾
           Invoice</button>
         <button class="tbtn ghost" onclick="goPage('history')" id="histNavBtn"
-          style="border:1px solid rgba(255,255,255,.3);padding:4px 10px;font-size:11.5px;">📂 History</button>
-        <span class="db-chip no" id="dbChip">⚫ No DB</span>
-        <label class="tbtn amber" id="importExcelBtn" style="cursor:pointer;padding:4px 10px;font-size:11.5px;">
-          📂 <span id="importExcelLabel">Import Excel</span>
+          style="border:1px solid rgba(255,255,255,.3);padding:4px 8px;font-size:11px;">📂 History</button>
+        <span class="db-chip no" id="dbChip" title="Product Database Status">⚫ No DB</span>
+        <label class="tbtn amber" id="importExcelBtn" style="cursor:pointer;padding:4px 8px;font-size:11px;"
+          title="Import Excel Product Database">
+          📂 <span id="importExcelLabel">Import DB</span>
           <input type="file" id="excelFile" accept=".xlsx,.xls" style="display:none" onchange="loadExcel(this)">
         </label>
-        <button class="tbtn teal" onclick="downloadTemplate()" style="padding:4px 9px;font-size:11.5px;">⬇
+        <button class="tbtn teal" onclick="downloadTemplate()" style="padding:4px 8px;font-size:11px;">⬇
           Template</button>
         <div style="position:relative;display:inline-flex;">
           <button class="tbtn ghost" onclick="openNotifications()" id="notifBtn"
@@ -2069,8 +2021,9 @@
           <span id="notifBadge"
             style="display:none;position:absolute;top:-3px;right:-3px;background:var(--cr);color:white;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;"></span>
         </div>
-        <div class="user-chip" id="userChip" onclick="toggleUD()">
-          <span id="userLbl">—</span><span class="rtag" id="roleLbl">user</span>
+        <div class="user-chip" id="userChip" onclick="toggleUD()" style="position:relative;z-index:1000;">
+          <span id="userLbl">—</span>
+          <span class="rtag" id="roleLbl">user</span>
           <div class="udrop" id="udrop">
             <div class="udrop-item" onclick="openSettings();closeUD()">⚙ Settings</div>
             <div class="udrop-item admin-tab" id="adminLink" style="display:none" onclick="goPage('admin');closeUD()">👥
@@ -2451,6 +2404,16 @@
         style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:7px 11px;font-size:11.5px;color:#166534;font-weight:600;margin-bottom:10px;">
         ✅ Firestore এ synced — সব device এ available
       </div>
+      <div class="sp-sec">Product Database</div>
+      <div style="background:#f8fafc;border:1px solid var(--bdr);border-radius:6px;padding:9px 11px;margin-bottom:8px;">
+        <div style="font-size:12px;color:var(--txt2);margin-bottom:6px;">
+          <span id="spDbStatus">⚫ No DB loaded</span>
+        </div>
+        <button onclick="resetPersonalDB()" id="resetPersonalDbBtn"
+          style="width:100%;background:#fef2f2;color:var(--cr);border:1.5px solid #fecaca;border-radius:6px;padding:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f);">
+          🗑 Reset Personal DB (Use Admin Master)
+        </button>
+      </div>
       <div class="sp-sec">Branch Information</div>
       <div class="sp-g">
         <label>Branch Code &amp; Name <span class="admin-lock-tag" id="lockBranch">🔒 Admin Only</span></label>
@@ -2481,12 +2444,6 @@
       <button class="sp-cancel" onclick="closeSettings()">Cancel</button>
     </div>
   </div>
-  <div class="sp-sec" id="personalDbSection">Personal Product DB</div>
-  <div class="sp-g" id="personalDbInfo" style="font-size:12px;color:var(--txt2);"></div>
-  <button onclick="resetPersonalDB()" id="resetPersonalDbBtn"
-    style="margin-top:6px;width:100%;background:#fef2f2;color:var(--cr);border:1.5px solid #fecaca;border-radius:6px;padding:7px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--f);">
-    🗑 Reset Personal DB (Use Admin Master)
-  </button>
 
   <!-- ═══════════ NOTIFICATION PANEL ═══════════ -->
   <div id="notifDim" onclick="closeNotifications()"
@@ -2858,13 +2815,12 @@
         toast('Product DB loaded: ' + productDB.length + ' products (' + label + ')', 's', 2500);
       });
       checkNotifBadge(); // login এর পরে unread count দেখাও
-      handleResize(); // mobile menu button show/hide
       // Import button label update
       const importLabel = document.getElementById('importExcelLabel');
       if (importLabel) {
         importLabel.textContent = CU?.role === 'admin'
-          ? 'Import Excel (Master DB)'
-          : 'Import Excel (Personal DB)';
+          ? 'Import DB (Master)'
+          : 'Import DB';
       }
       rowId = 0; addRow(); calc(); goPage('invoice');
     }
@@ -2892,9 +2848,28 @@
     /* ═══════════════════════════════════════════
        USER DROP
     ═══════════════════════════════════════════ */
-    function toggleUD() { document.getElementById('udrop').classList.toggle('open'); }
-    function closeUD() { document.getElementById('udrop').classList.remove('open'); }
-    document.addEventListener('click', e => { if (!document.getElementById('userChip')?.contains(e.target)) closeUD(); });
+    function toggleUD() {
+      const drop = document.getElementById('udrop');
+      if (!drop) return;
+      const isOpen = drop.classList.contains('open');
+      // অন্য সব বন্ধ করো
+      try { closeNotifications(); } catch (e) { }
+      drop.classList.toggle('open', !isOpen);
+    }
+    function closeUD() {
+      document.getElementById('udrop')?.classList.remove('open');
+    }
+    document.addEventListener('click', e => {
+      const chip = document.getElementById('userChip');
+      const notifPanel = document.getElementById('notifPanel');
+      const notifBtn = document.getElementById('notifBtn');
+      if (chip && !chip.contains(e.target)) closeUD();
+      if (notifPanel && notifBtn &&
+        !notifPanel.contains(e.target) &&
+        !notifBtn.contains(e.target)) {
+        try { closeNotifications(); } catch (e) { }
+      }
+    });
 
     /* ═══════════════════════════════════════════
        PAGE NAV
@@ -2933,11 +2908,25 @@
     async function openSettings() {
       document.getElementById('sPanel').classList.add('open');
       document.getElementById('sDim').classList.add('on');
-      // Firestore থেকে latest settings load করো
       try {
         await loadSharedSettings();
         loadSettings();
       } catch (e) { console.warn('Settings refresh failed', e); }
+      // DB status update
+      const spDb = document.getElementById('spDbStatus');
+      if (spDb) {
+        if (productDB.length) {
+          const isAdmin = CU?.role === 'admin';
+          spDb.innerHTML = '🟢 <strong>' + productDB.length + '</strong> products loaded' + (isAdmin ? ' (Master DB)' : ' (Personal DB)');
+          spDb.style.color = 'var(--cg2)';
+        } else {
+          spDb.textContent = '⚫ No DB loaded — Import Excel to add products';
+          spDb.style.color = 'var(--txt3)';
+        }
+      }
+      // Admin হলে reset button লুকাও
+      const resetBtn = document.getElementById('resetPersonalDbBtn');
+      if (resetBtn) resetBtn.style.display = CU?.role === 'admin' ? 'none' : 'block';
     }
     function closeSettings() { document.getElementById('sPanel').classList.remove('open'); document.getElementById('sDim').classList.remove('on'); }
     async function saveSettings() {
@@ -3095,12 +3084,14 @@
         c.textContent = '⚫ No DB';
         return;
       }
-      // Personal নাকি Master সেটা localStorage থেকে বোঝো
       const isAdmin = CU?.role === 'admin';
       c.className = 'db-chip ok';
       c.textContent = isAdmin
-        ? '🟢 ' + productDB.length + ' products (Master)'
-        : '🟢 ' + productDB.length + ' products';
+        ? '🟢 ' + productDB.length + 'p (M)'
+        : '🟢 ' + productDB.length + 'p';
+      c.title = isAdmin
+        ? productDB.length + ' products (Master DB)'
+        : productDB.length + ' products (Personal DB)';
     }
 
     async function resetPersonalDB() {
@@ -3513,7 +3504,7 @@
        NEW / CLEAR
     ═══════════════════════════════════════════ */
     function newInvoice() {
-      cfmShow({ icon: '🧾', title: 'New Invoice?', msg: 'Current data will be cleared and a new invoice will be ready.', okLabel: 'Yes, New Invoice', okColor: 'var(--c1)', cb: () => { bumpNo(); resetForm(); toast('New invoice ready.', 's'); closeMobSidebarAfterAction(); } });
+      cfmShow({ icon: '🧾', title: 'New Invoice?', msg: 'Current data will be cleared and a new invoice will be ready.', okLabel: 'Yes, New Invoice', okColor: 'var(--c1)', cb: () => { bumpNo(); resetForm(); toast('New invoice ready.', 's'); } });
     }
     function clearAll() {
       cfmShow({ icon: '🗑️', title: 'Clear All?', msg: 'All form data will be cleared.', okLabel: 'Clear', okColor: 'var(--cr)', cb: () => { resetForm(); toast('Cleared.', 'w'); } });
@@ -4882,40 +4873,6 @@
         updateNotifBadge(notifs.filter(n => !n.readBy?.includes(CU.uid)).length);
       } catch (e) { }
     }
-
-    /* ═══════════════════════════════════════════
-   MOBILE SIDEBAR
-═══════════════════════════════════════════ */
-    function toggleMobSidebar() {
-      const sb = document.getElementById('sidebar');
-      const dim = document.getElementById('mobSidebarDim');
-      const isOpen = sb.classList.contains('mob-open');
-      if (isOpen) {
-        sb.classList.remove('mob-open');
-        dim.classList.remove('on');
-      } else {
-        sb.classList.add('mob-open');
-        dim.classList.add('on');
-      }
-    }
-
-    function closeMobSidebar() {
-      document.getElementById('sidebar')?.classList.remove('mob-open');
-      document.getElementById('mobSidebarDim')?.classList.remove('on');
-    }
-
-    // Invoice save/clear এর পরে mobile sidebar বন্ধ করো
-    function closeMobSidebarAfterAction() {
-      if (window.innerWidth <= 900) closeMobSidebar();
-    }
-
-    // Screen size অনুযায়ী menu button দেখাও/লুকাও
-    function handleResize() {
-      const btn = document.getElementById('mobMenuBtn');
-      if (!btn) return;
-      btn.style.display = window.innerWidth <= 900 ? 'inline-flex' : 'none';
-    }
-    window.addEventListener('resize', handleResize);
 
     /* ═══════════════════════════════════════════
        TOAST
