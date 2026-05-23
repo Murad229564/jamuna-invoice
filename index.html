@@ -609,6 +609,19 @@
       color: rgba(255, 255, 255, .5);
     }
 
+    /* Responsive topbar */
+    @media (max-width: 900px) {
+      .tbar-desktop { display: none !important; }
+      #tbarMoreWrap { display: inline-flex !important; }
+    }
+    @media (min-width: 901px) {
+      #tbarMoreWrap { display: none !important; }
+    }
+    /* inv-pills: hide Date & Branch on very small screens */
+    @media (max-width: 600px) {
+      .inv-pill.dp { display: none !important; }
+    }
+
     .user-chip {
       display: flex;
       align-items: center;
@@ -642,7 +655,7 @@
       box-shadow: var(--sh2);
       border: 1px solid var(--bdr);
       min-width: 170px;
-      z-index: 9999;
+      z-index: 10001;
       display: none;
     }
 
@@ -2178,7 +2191,7 @@
               onkeydown="if(event.key==='Enter')doLogin()"><button type="button" class="eye-btn"
               onclick="toggleEye('l_pwd',this)" tabindex="-1">👁</button></div>
         </div>
-        <button class="btn-auth" onclick="doLogin()">Sign In →</button>
+        <button class="btn-auth" id="loginSubmitBtn" onclick="doLogin()">Sign In →</button>
         <div style="text-align:right;margin-top:6px;margin-bottom:2px;"><span onclick="showForgotPwd()"
             style="font-size:11.5px;color:var(--c1);cursor:pointer;font-weight:600;text-decoration:underline;">Forgot
             Password?</span></div>
@@ -2191,7 +2204,9 @@
           <div class="pwd-wrap"><input type="password" id="r_pwd" placeholder="Min 4 characters"><button type="button"
               class="eye-btn" onclick="toggleEye('r_pwd',this)" tabindex="-1">👁</button></div>
         </div>
-        <div class="lgrp"><label>Branch</label><input type="text" id="r_branch" placeholder="Your branch name"></div>
+        <div class="lgrp"><label>Branch Code &amp; Name</label><input type="text" id="r_branch" placeholder="যেমন: (10032) Daulatpur Khulna"></div>
+        <div class="lgrp"><label>Branch Address</label><input type="text" id="r_addr" placeholder="Branch এর সম্পূর্ণ ঠিকানা"></div>
+        <div class="lgrp"><label>Branch Mobile</label><input type="text" id="r_mobile" placeholder="01XXXXXXXXX"></div>
         <div class="lgrp"><label>Email <span style="color:#ef4444">*</span></label><input type="email" id="r_email"
             placeholder="your@email.com (verification link যাবে)"></div>
         <button class="btn-auth" onclick="doRegister()">Create Account</button>
@@ -2205,7 +2220,7 @@
   <div id="app">
     <!-- TOPBAR — single, clean -->
     <div class="topbar"
-      style="padding:0 12px;gap:6px;align-items:center;overflow:visible;min-width:0;position:relative;">
+      style="padding:0 8px;gap:4px;align-items:center;overflow:visible;min-width:0;position:relative;z-index:500;">
       <!-- Logo -->
       <div style="display:flex;flex-direction:column;align-items:flex-start;gap:0;flex-shrink:0;padding:3px 0;">
         <img src="https://jeal.jamuna.tech/Assets/lib/CommonUI/images/jamuna-logo.PNG" alt="Jamuna"
@@ -2216,7 +2231,7 @@
       </div>
       <div class="tsep"></div>
       <!-- Pills -->
-      <div class="inv-pills" style="gap:5px;">
+      <div class="inv-pills" style="gap:5px;flex-shrink:1;min-width:0;">
         <div class="inv-pill"><span class="plbl">Invoice</span><span class="pval" id="pillNo">—</span></div>
         <div class="inv-pill dp"><span class="plbl">Date</span><span class="pval" id="pillDate">—</span></div>
         <div class="inv-pill dp"><span class="plbl">Branch</span><span class="pval" id="pillBranch"
@@ -2225,40 +2240,55 @@
       <!-- Spacer -->
       <div style="flex:1;min-width:0;overflow:hidden;"></div>
       <!-- Right buttons -->
-      <div class="tbar-right" style="gap:5px;flex-shrink:0;overflow:visible;padding-right:12px;">
-        <button class="tbtn ghost" onclick="goPage('invoice')"
-          style="border:1px solid rgba(255,255,255,.3);padding:4px 8px;font-size:11px;background:rgba(34,197,94,.18);border-color:rgba(34,197,94,.4);color:#86efac;font-weight:700;">🧾
-          Invoice</button>
-        <button class="tbtn ghost" onclick="goPage('history')" id="histNavBtn"
+      <div class="tbar-right" style="gap:5px;flex-shrink:0;overflow:visible;padding-right:8px;">
+
+        <!-- Desktop-only buttons (hidden on small screens) -->
+        <button class="tbtn ghost tbar-desktop" onclick="goPage('invoice')"
+          style="border:1px solid rgba(255,255,255,.3);padding:4px 8px;font-size:11px;background:rgba(34,197,94,.18);border-color:rgba(34,197,94,.4);color:#86efac;font-weight:700;">🧾 Invoice</button>
+        <button class="tbtn ghost tbar-desktop" onclick="goPage('history')" id="histNavBtn"
           style="border:1px solid rgba(255,255,255,.3);padding:4px 8px;font-size:11px;">📂 History</button>
-        <span class="db-chip no" id="dbChip" title="Product Database Status">⚫ No DB</span>
-        <label class="tbtn amber" id="importExcelBtn" style="cursor:pointer;padding:4px 8px;font-size:11px;"
-          title="Import Excel Product Database">
+        <span class="db-chip no tbar-desktop" id="dbChip" title="Product Database Status">⚫ No DB</span>
+        <label class="tbtn amber tbar-desktop" id="importExcelBtn" style="cursor:pointer;padding:4px 8px;font-size:11px;" title="Import Excel Product Database">
           📂 <span id="importExcelLabel">Import DB</span>
           <input type="file" id="excelFile" accept=".xlsx,.xls" style="display:none" onchange="loadExcel(this)">
         </label>
-        <button class="tbtn teal" onclick="downloadTemplate()" style="padding:4px 8px;font-size:11px;">⬇
-          Template</button>
+        <button class="tbtn teal tbar-desktop" onclick="downloadTemplate()" style="padding:4px 8px;font-size:11px;">⬇ Template</button>
+
+        <!-- More menu (visible on small screens) -->
+        <div class="tbar-more" id="tbarMoreWrap" style="position:relative;display:none;">
+          <button onclick="toggleMoreMenu()" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:white;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer;font-weight:700;">⋯</button>
+          <div id="tbarMoreDrop" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:white;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.18);min-width:180px;z-index:3000;overflow:hidden;border:1px solid #e2e8f0;">
+            <div onclick="goPage('invoice');closeMoreMenu()" style="padding:11px 16px;font-size:13px;cursor:pointer;border-bottom:1px solid #f1f5f9;color:#1e293b;font-weight:600;display:flex;align-items:center;gap:8px;">🧾 Invoice</div>
+            <div onclick="goPage('history');closeMoreMenu()" style="padding:11px 16px;font-size:13px;cursor:pointer;border-bottom:1px solid #f1f5f9;color:#1e293b;font-weight:600;display:flex;align-items:center;gap:8px;">📂 History</div>
+            <div style="padding:8px 16px;border-bottom:1px solid #f1f5f9;"><span class="db-chip no" id="dbChipMobile" title="DB Status">⚫ No DB</span></div>
+            <label style="padding:11px 16px;font-size:13px;cursor:pointer;border-bottom:1px solid #f1f5f9;color:#92400e;font-weight:600;display:flex;align-items:center;gap:8px;background:#fef3c7;" title="Import DB">
+              📂 Import DB
+              <input type="file" id="excelFileMobile" accept=".xlsx,.xls" style="display:none" onchange="loadExcel(this);closeMoreMenu()">
+            </label>
+            <div onclick="downloadTemplate();closeMoreMenu()" style="padding:11px 16px;font-size:13px;cursor:pointer;color:#0369a1;font-weight:600;display:flex;align-items:center;gap:8px;">⬇ Template</div>
+          </div>
+        </div>
+
+        <!-- Always visible: Notif + Chat + User -->
         <div style="position:relative;display:inline-flex;">
           <button class="tbtn ghost" onclick="openNotifications()" id="notifBtn"
-            style="padding:4px 9px;font-size:13px;">🔔</button>
+            style="padding:4px 9px;font-size:14px;">🔔</button>
           <span id="notifBadge"
             style="display:none;position:absolute;top:-3px;right:-3px;background:var(--cr);color:white;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;"></span>
         </div>
         <div style="position:relative;display:inline-flex;">
           <button class="tbtn ghost" onclick="openSupportChat()" id="chatBtn"
-            style="padding:4px 9px;font-size:13px;">💬</button>
+            style="padding:4px 9px;font-size:14px;">💬</button>
           <span id="chatBadge"
             style="display:none;position:absolute;top:-3px;right:-3px;background:#f59e0b;color:white;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;"></span>
         </div>
-        <div class="user-chip" id="userChip" onclick="toggleUD()" style="position:relative;z-index:1000;">
+        <div class="user-chip" id="userChip" onclick="toggleUD()" style="position:relative;z-index:10000;">
           <span id="userLbl">—</span>
           <span class="rtag" id="roleLbl">user</span>
           <div class="udrop" id="udrop">
             <div class="udrop-item" onclick="openProfileModal()">👤 My Profile</div>
             <div class="udrop-item" onclick="openSettings();closeUD()">⚙ Settings</div>
-            <div class="udrop-item admin-tab" id="adminLink" style="display:none" onclick="goPage('admin');closeUD()">👥
-              Admin Panel</div>
+            <div class="udrop-item admin-tab" id="adminLink" style="display:none" onclick="goPage('admin');closeUD()">👥 Admin Panel</div>
             <div class="udrop-item danger" onclick="doLogout()">↩ Sign Out</div>
           </div>
         </div>
@@ -2406,7 +2436,7 @@
         <!-- ══ PRODUCT TOOLBAR ══ -->
         <div class="pt-bar" style="padding:6px 14px;">
           <div class="pt-title">🛒 Products <span class="pt-cnt" id="itemCnt">0 items</span></div>
-          <button class="btn-addrow" onclick="addRow()" style="margin-left:10px;">＋ Add Product Row <span
+          <button class="btn-addrow" onclick="addRowSafe()" style="margin-left:10px;">＋ Add Product Row <span
               style="font-size:10px;opacity:.55">Ctrl+Enter</span></button>
           <span class="pt-hint" style="margin-left:6px;">Type name or barcode to auto-fill</span>
           <div style="margin-left:auto;display:flex;gap:6px;flex-shrink:0;">
@@ -2455,21 +2485,32 @@
           <div class="pgcard-body">
             <div class="srch-bar">
               <input type="text" id="srchTxt" placeholder="Search invoice / customer…" oninput="renderHist()"
-                style="width:210px">
+                style="width:190px">
               <input type="date" id="srchDate" onchange="renderHist()" title="Filter by date">
-              <span style="font-size:11px;color:var(--txt3);margin:0 4px;">থেকে</span>
+              <span style="font-size:11px;color:var(--txt3);margin:0 2px;">থেকে</span>
               <input type="date" id="srchDateEnd" onchange="renderHist()"
                 style="border:1.5px solid var(--bdr);border-radius:var(--r2);padding:5px 8px;font-size:12px;font-family:var(--f);color:var(--txt);background:var(--inp);">
-              <select id="srchStatus" onchange="renderHist()" style="width:130px">
+              <select id="srchStatus" onchange="renderHist()" style="width:120px">
                 <option value="">All Invoices</option>
                 <option value="active">Active</option>
-                <option value="deleted">Deleted (My)</option>
+                <option value="deleted">Deleted</option>
               </select>
+              <select id="srchUser" onchange="renderHist()" style="width:130px;display:none;" class="admin-tab">
+                <option value="">All Users</option>
+              </select>
+            </div>
+            <!-- Bulk action toolbar — selected হলে দেখাবে -->
+            <div id="bulkToolbar" style="display:none;padding:8px 14px;background:#eff6ff;border-bottom:2px solid #bfdbfe;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span id="bulkCount" style="font-size:12.5px;font-weight:700;color:#1d4ed8;">0 টি selected</span>
+              <button onclick="bulkExport()" style="background:#16a34a;color:white;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;">⬇ Export Selected</button>
+              <button onclick="bulkDelete()" style="background:#dc2626;color:white;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;">🗑 Delete Selected</button>
+              <button onclick="clearBulkSelect()" style="background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;">✕ Cancel</button>
             </div>
             <div style="overflow-x:auto">
               <table class="dtbl">
                 <thead>
                   <tr>
+                    <th style="width:34px;"><input type="checkbox" id="selectAllHist" onchange="toggleSelectAll(this)" title="সব select করুন" style="cursor:pointer;width:15px;height:15px;"></th>
                     <th>Invoice No</th>
                     <th>Date</th>
                     <th>Customer</th>
@@ -2505,7 +2546,22 @@
         <!-- Users tab -->
         <div id="admSection0">
           <div class="pgcard">
-            <div class="pgcard-head"><span class="pgcard-title">👥 User Management</span></div>
+            <div class="pgcard-head">
+              <span class="pgcard-title">👥 User Management</span>
+            </div>
+            <div class="srch-bar" style="padding:10px 14px;border-bottom:1px solid var(--bdr);flex-wrap:wrap;gap:6px;">
+              <input type="text" id="admUserSearch" placeholder="Search by name / User ID / branch…" oninput="renderAdmUsers()" style="width:200px;">
+              <select id="admUserStatus" onchange="renderAdmUsers()" style="width:110px;border:1.5px solid var(--bdr);border-radius:var(--r2);padding:5px 8px;font-size:12px;font-family:var(--f);">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+                <option value="inactive">Inactive</option>
+              </select>
+              <input type="date" id="admUserDateFrom" onchange="renderAdmUsers()" title="Joined from" style="border:1.5px solid var(--bdr);border-radius:var(--r2);padding:5px 8px;font-size:12px;font-family:var(--f);">
+              <span style="font-size:11px;color:var(--txt3);">থেকে</span>
+              <input type="date" id="admUserDateTo" onchange="renderAdmUsers()" title="Joined to" style="border:1.5px solid var(--bdr);border-radius:var(--r2);padding:5px 8px;font-size:12px;font-family:var(--f);">
+              <button onclick="document.getElementById('admUserSearch').value='';document.getElementById('admUserStatus').value='';document.getElementById('admUserDateFrom').value='';document.getElementById('admUserDateTo').value='';renderAdmUsers();" style="background:#f1f5f9;border:1px solid var(--bdr);border-radius:5px;padding:5px 10px;font-size:11.5px;cursor:pointer;">✕ Clear</button>
+            </div>
             <div style="overflow-x:auto">
               <table class="dtbl">
                 <thead>
@@ -2556,11 +2612,17 @@
           <div class="pgcard">
             <div class="pgcard-head">
               <span class="pgcard-title">🧾 All Invoices</span>
-              <div style="display:flex;gap:6px">
-                <input type="text" id="admInvSrch" placeholder="Search…" oninput="renderAdmInvs()"
-                  style="border:1.5px solid var(--bdr);border-radius:var(--r2);padding:5px 9px;font-size:12px;font-family:var(--f);background:var(--inp);">
-                <button class="xbtn ok" onclick="exportHistXlsx(true)">⬇ Export All</button>
-              </div>
+              <button class="xbtn ok" onclick="exportHistXlsx(true)">⬇ Export All</button>
+            </div>
+            <div class="srch-bar" style="padding:10px 14px;border-bottom:1px solid var(--bdr);flex-wrap:wrap;gap:6px;">
+              <input type="text" id="admInvSrch" placeholder="Invoice No / Customer…" oninput="renderAdmInvs()" style="width:180px;">
+              <select id="admInvUser" onchange="renderAdmInvs()" style="width:140px;border:1.5px solid var(--bdr);border-radius:var(--r2);padding:5px 8px;font-size:12px;font-family:var(--f);">
+                <option value="">All Users</option>
+              </select>
+              <input type="date" id="admInvDateFrom" onchange="renderAdmInvs()" title="Date from" style="border:1.5px solid var(--bdr);border-radius:var(--r2);padding:5px 8px;font-size:12px;font-family:var(--f);">
+              <span style="font-size:11px;color:var(--txt3);">থেকে</span>
+              <input type="date" id="admInvDateTo" onchange="renderAdmInvs()" title="Date to" style="border:1.5px solid var(--bdr);border-radius:var(--r2);padding:5px 8px;font-size:12px;font-family:var(--f);">
+              <button onclick="document.getElementById('admInvSrch').value='';document.getElementById('admInvUser').value='';document.getElementById('admInvDateFrom').value='';document.getElementById('admInvDateTo').value='';renderAdmInvs();" style="background:#f1f5f9;border:1px solid var(--bdr);border-radius:5px;padding:5px 10px;font-size:11.5px;cursor:pointer;">✕ Clear</button>
             </div>
             <div style="overflow-x:auto">
               <table class="dtbl">
@@ -2970,10 +3032,17 @@
       if (!getUsers().find(x => x.uid === 'admin')) {
         const adminUser = {
           uid: 'admin', pwd: btoa('admin123'), name: 'Administrator',
-          branch: 'HQ', role: 'admin', status: 'active',
+          branch: 'HQ', role: 'admin', status: 'active', email: '',
           created: new Date().toISOString(), pwdHistory: []
         };
         await upsertUser(adminUser);
+      } else {
+        // Existing admin — email field না থাকলে ensure করো (old data migration)
+        const admU = getUsers().find(x => x.uid === 'admin');
+        if (admU && admU.email === undefined) {
+          admU.email = '';
+          await upsertUser(admU);
+        }
       }
     }
 
@@ -3005,6 +3074,19 @@
       btn.textContent = show ? '🙈' : '👁';
     }
 
+
+    async function saveAdminEmail() {
+      const email = document.getElementById('pf_adminemail')?.value?.trim();
+      if (!email || !email.includes('@')) { toast('Valid email দিন।', 'e'); return; }
+      const users = getUsers();
+      const admin = users.find(u => u.uid === 'admin');
+      if (!admin) return;
+      admin.email = email;
+      await upsertUser(admin);
+      CU.email = email;
+      toast('✅ Admin email saved: ' + email, 's');
+    }
+
     function showForgotPwd() {
       showModal('🔑 Forgot Password', `
     <div style="font-size:13px;color:var(--txt2);margin-bottom:14px;">
@@ -3022,8 +3104,18 @@
   `, async () => {
         const email = document.getElementById('fpEmail')?.value?.trim();
         if (!email) { toast('Email দিন।', 'e'); return false; }
-        const u = getUsers().find(x => x.email && x.email.toLowerCase() === email.toLowerCase());
-        if (!u) { toast('এই email দিয়ে কোনো account পাওয়া যায়নি।', 'e'); return false; }
+        const allUsers = getUsers();
+        const u = allUsers.find(x => x.email && x.email.toLowerCase() === email.toLowerCase());
+        if (!u) {
+          // Admin email check
+          const adminNoEmail = allUsers.find(x => x.uid === 'admin' && (!x.email || x.email === ''));
+          if (adminNoEmail) {
+            toast('Admin account এ email set করা নেই। Admin Panel → Profile → Admin Recovery Email এ email যোগ করুন।', 'e', 7000);
+          } else {
+            toast('এই email দিয়ে কোনো account পাওয়া যায়নি।', 'e');
+          }
+          return false;
+        }
         if (u.status === 'pending') { toast('Account এখনও approve হয়নি। Admin এর সাথে যোগাযোগ করুন।', 'e'); return false; }
         if (u.status === 'inactive') { toast('Account disabled। Admin এর সাথে যোগাযোগ করুন।', 'e'); return false; }
         // Reset token তৈরি (৩০ মিনিট valid)
@@ -3056,17 +3148,73 @@
       });
     }
 
+    // Login attempt tracking
+    const _loginAttempts = {}; // { uid: { count, lockedUntil } }
+
     async function doLogin() {
       const uid = document.getElementById('l_uid').value.trim();
       const pwd = document.getElementById('l_pwd').value;
-      if (!uid || !pwd) { setMsg('loginMsg', 'Enter User ID and password.', 'e'); return; }
+      if (!uid || !pwd) { setMsg('loginMsg', 'User ID এবং Password দিন।', 'e'); return; }
+
+      // Lockout check
+      const att = _loginAttempts[uid] || { count: 0, lockedUntil: 0 };
+      if (att.lockedUntil > Date.now()) {
+        const secLeft = Math.ceil((att.lockedUntil - Date.now()) / 1000);
+        setMsg('loginMsg', `⛔ অনেকবার ভুল হয়েছে। ${secLeft} সেকেন্ড পরে চেষ্টা করুন।`, 'e');
+        _startLockTimer(uid);
+        return;
+      }
+
       const u = getUsers().find(x => x.uid === uid && x.pwd === btoa(pwd));
-      if (!u) { setMsg('loginMsg', 'Invalid credentials.', 'e'); return; }
-      if (u.status === 'pending') { setMsg('loginMsg', 'Pending admin approval.', 'e'); return; }
-      if (u.status === 'inactive') { setMsg('loginMsg', 'Account disabled. Contact admin.', 'e'); return; }
-      CU = u; DB.s('ji_sess', u.uid);
+      if (!u) {
+        att.count = (att.count || 0) + 1;
+        const remaining = 5 - att.count;
+        if (att.count >= 5) {
+          att.lockedUntil = Date.now() + 30000; // 30 সেকেন্ড lock
+          att.count = 0;
+          _loginAttempts[uid] = att;
+          setMsg('loginMsg', '⛔ ৫ বার ভুল হয়েছে। ৩০ সেকেন্ড অপেক্ষা করুন।', 'e');
+          _startLockTimer(uid);
+          _disableLoginBtn(30);
+        } else {
+          _loginAttempts[uid] = att;
+          setMsg('loginMsg', `❌ ID বা Password ভুল। আরো ${remaining} বার সুযোগ আছে।`, 'e');
+        }
+        return;
+      }
+
+      // Success — attempt reset করো
+      delete _loginAttempts[uid];
+
+      if (u.status === 'pending') { setMsg('loginMsg', '⏳ Admin approval এর অপেক্ষায়।', 'e'); return; }
+      if (u.status === 'inactive') { setMsg('loginMsg', '🚫 Account disabled। Admin এর সাথে যোগাযোগ করুন।', 'e'); return; }
+      if (!u.emailVerified) { setMsg('loginMsg', '📧 Email verify করুন। Inbox চেক করুন।', 'e'); return; }
+      CU = u; sessionStorage.setItem('ji_sess', u.uid);
       addAudit(u.uid, 'LOGIN', 'User signed in');
       launchApp();
+    }
+
+    function _startLockTimer(uid) {
+      const btn = document.getElementById('loginSubmitBtn');
+      const interval = setInterval(() => {
+        const att = _loginAttempts[uid];
+        if (!att || att.lockedUntil <= Date.now()) {
+          clearInterval(interval);
+          setMsg('loginMsg', '', '');
+          if (btn) { btn.disabled = false; btn.textContent = 'Sign In →'; }
+          return;
+        }
+        const secLeft = Math.ceil((att.lockedUntil - Date.now()) / 1000);
+        setMsg('loginMsg', `⛔ ${secLeft} সেকেন্ড পরে চেষ্টা করুন।`, 'e');
+        if (btn) { btn.disabled = true; btn.textContent = `⏳ ${secLeft}s`; }
+      }, 1000);
+    }
+
+    function _disableLoginBtn(secs) {
+      const btn = document.getElementById('loginSubmitBtn');
+      if (!btn) return;
+      btn.disabled = true;
+      btn.textContent = `⏳ ${secs}s`;
     }
 
     async function doRegister() {
@@ -3074,6 +3222,8 @@
       const uid = document.getElementById('r_uid').value.trim();
       const pwd = document.getElementById('r_pwd').value;
       const branch = document.getElementById('r_branch').value.trim();
+      const addr = document.getElementById('r_addr')?.value?.trim() || '';
+      const mobile = document.getElementById('r_mobile')?.value?.trim() || '';
       const email = document.getElementById('r_email').value.trim();
       if (!name || !uid || !pwd || !email) { setMsg('regMsg', 'All fields required (including email).', 'e'); return; }
       if (uid.length < 3) { setMsg('regMsg', 'User ID ≥ 3 chars.', 'e'); return; }
@@ -3083,7 +3233,7 @@
       setMsg('regMsg', '⏳ Creating account & sending verification email...', '');
       // Unique verify token তৈরি
       const verifyToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
-      const newUser = { uid, pwd: btoa(pwd), name, branch, email, role: 'user', status: 'pending', emailVerified: false, verifyToken, created: new Date().toISOString(), pwdHistory: [] };
+      const newUser = { uid, pwd: btoa(pwd), name, branch, addr, mobile, email, role: 'user', status: 'pending', emailVerified: false, verifyToken, created: new Date().toISOString(), pwdHistory: [] };
       await upsertUser(newUser);
       addAudit(uid, 'REGISTER', 'New registration: ' + name + ', branch: ' + branch + ', email: ' + email);
       // Admin কে in-app notification পাঠাও
@@ -3106,7 +3256,7 @@
         setMsg('regMsg', '✅ Account created! (Email send failed — contact admin)', 's');
       }
       document.getElementById('pendingNote').style.display = 'block';
-      ['r_name', 'r_uid', 'r_pwd', 'r_branch', 'r_email'].forEach(id => document.getElementById(id).value = '');
+      ['r_name', 'r_uid', 'r_pwd', 'r_branch', 'r_addr', 'r_mobile', 'r_email'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
     }
 
 
@@ -3120,13 +3270,22 @@
       const panel = document.getElementById('chatPanel');
       panel.style.display = 'flex';
       const isAdmin = CU?.role === 'admin';
+      const uv = document.getElementById('chatUserListView');
+      const cv = document.getElementById('chatView');
+      const backBtn = document.getElementById('chatBackBtn');
       if (isAdmin) {
-        document.getElementById('chatAdminUserBar').style.display = 'block';
+        // Admin → show user list first
+        if (uv) uv.style.display = 'block';
+        if (cv) cv.style.display = 'none';
+        if (backBtn) backBtn.style.display = 'none';
         document.getElementById('chatPanelTitle').textContent = 'Support Chat — Admin';
         document.getElementById('chatPanelSub').textContent = 'User select করে reply করুন';
         loadChatUserList();
       } else {
-        document.getElementById('chatAdminUserBar').style.display = 'none';
+        // User → directly open chat
+        if (uv) uv.style.display = 'none';
+        if (cv) { cv.style.display = 'flex'; }
+        if (backBtn) backBtn.style.display = 'none';
         document.getElementById('chatPanelTitle').textContent = 'Support Chat';
         document.getElementById('chatPanelSub').textContent = 'Admin এর সাথে কথা বলুন';
         _chatTargetUid = CU.uid;
@@ -3142,23 +3301,88 @@
     }
 
     async function loadChatUserList() {
-      const users = getUsers().filter(u => u.role !== 'admin');
-      const sel = document.getElementById('chatUserSelect');
-      sel.innerHTML = '<option value="">-- User select করুন --</option>';
-      for (const u of users) {
-        const opt = document.createElement('option');
-        opt.value = u.uid;
-        opt.textContent = (u.name || u.uid) + ' (' + u.uid + ')';
-        sel.appendChild(opt);
+      const listDiv = document.getElementById('chatUserListView');
+      if (!listDiv) return;
+      listDiv.innerHTML = '<div style="padding:16px;text-align:center;color:#94a3b8;font-size:12px;">Loading...</div>';
+      const users = getUsers().filter(u => u.role !== 'admin' && u.status === 'active');
+
+      // Firestore থেকে সব chat room data আনো (unread + lastMsg + lastTime)
+      let roomData = {};
+      try {
+        const snap = await _fdb.collection('ji_chat').get();
+        snap.forEach(d => { roomData[d.id] = d.data(); });
+      } catch(e) {}
+
+      // Sort: lastTime অনুযায়ী (সবচেয়ে recent উপরে)
+      users.sort((a, b) => {
+        const ta = roomData[a.uid]?.lastTime || '0';
+        const tb = roomData[b.uid]?.lastTime || '0';
+        return tb.localeCompare(ta);
+      });
+
+      if (!users.length) {
+        listDiv.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;font-size:12px;">কোনো active user নেই।</div>';
+        return;
       }
+
+      listDiv.innerHTML = users.map(u => {
+        const room = roomData[u.uid] || {};
+        const unread = room.adminUnread || 0;
+        const lastMsg = room.lastMsg ? (room.lastMsg.length > 28 ? room.lastMsg.slice(0,28)+'…' : room.lastMsg) : 'কোনো message নেই';
+        const lastTime = room.lastTime ? room.lastTime.slice(11,16) : '';
+        const avatar = (u.name || u.uid).charAt(0).toUpperCase();
+        return `<div onclick="switchChatUser('${u.uid}')" style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid #f1f5f9;cursor:pointer;background:white;transition:background .12s;" onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background='white'">
+          <div style="width:38px;height:38px;border-radius:50%;background:var(--c1);color:white;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;">${avatar}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">
+              <div style="font-size:13px;font-weight:${unread>0?'700':'600'};color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${u.name || u.uid}</div>
+              <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
+                ${lastTime ? `<span style="font-size:10px;color:#94a3b8;">${lastTime}</span>` : ''}
+                ${unread > 0 ? `<span style="background:#ef4444;color:white;border-radius:50%;min-width:18px;height:18px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 3px;">${unread}</span>` : ''}
+              </div>
+            </div>
+            <div style="font-size:11px;color:${unread>0?'#334155':'#94a3b8'};font-weight:${unread>0?'600':'400'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;">${lastMsg}</div>
+          </div>
+        </div>`;
+      }).join('');
     }
 
     function switchChatUser(uid) {
       if (!uid) return;
       _chatTargetUid = uid;
       if (_chatUnsub) { _chatUnsub(); _chatUnsub = null; }
+      // Show chat view, hide user list
+      const uv = document.getElementById('chatUserListView');
+      const cv = document.getElementById('chatView');
+      const backBtn = document.getElementById('chatBackBtn');
+      if (uv) uv.style.display = 'none';
+      if (cv) { cv.style.display = 'flex'; }
+      if (backBtn) backBtn.style.display = 'inline-block';
+      // Update title
+      const users = getUsers();
+      const u = users.find(x => x.uid === uid);
+      const titleEl = document.getElementById('chatPanelTitle');
+      const subEl = document.getElementById('chatPanelSub');
+      if (titleEl) titleEl.textContent = u ? (u.name || uid) : uid;
+      if (subEl) subEl.textContent = 'ID: ' + uid;
       listenChat(uid);
       clearChatBadge(uid);
+    }
+
+    function chatBackToList() {
+      if (_chatUnsub) { _chatUnsub(); _chatUnsub = null; }
+      _chatTargetUid = null;
+      const uv = document.getElementById('chatUserListView');
+      const cv = document.getElementById('chatView');
+      const backBtn = document.getElementById('chatBackBtn');
+      if (uv) { uv.style.display = 'block'; }
+      if (cv) cv.style.display = 'none';
+      if (backBtn) backBtn.style.display = 'none';
+      const titleEl = document.getElementById('chatPanelTitle');
+      const subEl = document.getElementById('chatPanelSub');
+      if (titleEl) titleEl.textContent = 'Support Chat — Admin';
+      if (subEl) subEl.textContent = 'User select করে reply করুন';
+      loadChatUserList(); // Refresh list
     }
 
     function listenChat(roomUid) {
@@ -3229,43 +3453,72 @@
       } catch(e) {}
     }
 
-    // Chat badge polling — 15s interval
+    // Chat badge — realtime onSnapshot (polling এর চেয়ে faster)
+    let _chatBadgeUnsub = null;
+
     function startChatBadgePoller() {
       if (!CU) return;
-      updateChatBadge();
-      setInterval(updateChatBadge, 15000);
-    }
-
-    async function updateChatBadge() {
-      if (!CU) return;
+      if (_chatBadgeUnsub) { _chatBadgeUnsub(); _chatBadgeUnsub = null; }
+      const isAdmin = CU.role === 'admin';
       const badge = document.getElementById('chatBadge');
       if (!badge) return;
       try {
-        const isAdmin = CU.role === 'admin';
         if (isAdmin) {
-          // Admin: সব user এর adminUnread যোগ করো
-          const snap = await _fdb.collection('ji_chat').get();
-          let total = 0;
-          snap.forEach(d => { total += (d.data().adminUnread || 0); });
-          badge.textContent = total;
-          badge.style.display = total > 0 ? 'flex' : 'none';
+          // Admin: ji_chat collection সব docs watch করো
+          _chatBadgeUnsub = _fdb.collection('ji_chat')
+            .onSnapshot(snap => {
+              let total = 0;
+              snap.forEach(d => { total += (d.data().adminUnread || 0); });
+              badge.textContent = total;
+              badge.style.display = total > 0 ? 'flex' : 'none';
+            }, () => {});
         } else {
-          // User: নিজের room এর userUnread
-          const doc = await _fdb.collection('ji_chat').doc(CU.uid).get();
-          const unread = doc.exists ? (doc.data().userUnread || 0) : 0;
-          badge.textContent = unread;
-          badge.style.display = unread > 0 ? 'flex' : 'none';
+          // User: নিজের room watch করো
+          _chatBadgeUnsub = _fdb.collection('ji_chat').doc(CU.uid)
+            .onSnapshot(doc => {
+              const unread = doc.exists ? (doc.data().userUnread || 0) : 0;
+              badge.textContent = unread;
+              badge.style.display = unread > 0 ? 'flex' : 'none';
+            }, () => {});
         }
       } catch(e) {}
     }
 
-        function doLogout() {
+    function updateChatBadge() {} // backward compat — no-op
+
+        function toggleMoreMenu() {
+      const d = document.getElementById('tbarMoreDrop');
+      if (d) d.style.display = d.style.display === 'block' ? 'none' : 'block';
+    }
+    function closeMoreMenu() {
+      const d = document.getElementById('tbarMoreDrop');
+      if (d) d.style.display = 'none';
+    }
+    // Close more menu when clicking outside
+    document.addEventListener('click', function(e) {
+      const wrap = document.getElementById('tbarMoreWrap');
+      if (wrap && !wrap.contains(e.target)) closeMoreMenu();
+    });
+
+    // Sync dbChipMobile with dbChip
+    function syncDbChip() {
+      const main = document.getElementById('dbChip');
+      const mobile = document.getElementById('dbChipMobile');
+      if (main && mobile) {
+        mobile.className = main.className;
+        mobile.textContent = main.textContent;
+      }
+    }
+    const _origShowDB = typeof showDB === 'function' ? showDB : null;
+
+    function doLogout() {
       addAudit(CU?.uid || '?', 'LOGOUT', 'User signed out');
       clearSessionTimers();
       closeSessionWarning();
-      CU = null;
+      CU = null; sessionStorage.removeItem('ji_sess');
       stopNotifListener();
-      DB.d('ji_sess');
+      // Chat badge listener বন্ধ করো
+      if (_chatBadgeUnsub) { _chatBadgeUnsub(); _chatBadgeUnsub = null; }
       document.getElementById('app').style.display = 'none';
       document.getElementById('loginWrap').style.display = 'flex';
       setMsg('loginMsg', '', '');
@@ -3383,10 +3636,14 @@
        PAGE NAV
     ═══════════════════════════════════════════ */
     function goPage(id) {
+      // ── GUARD: admin page শুধু admin দেখতে পারবে ──
+      if (id === 'admin' && CU?.role !== 'admin') {
+        toast('⛔ Access denied.', 'e');
+        return;
+      }
       document.getElementById('sidebar').style.display = id === 'invoice' ? 'flex' : 'none';
       document.getElementById('mainInvoice').style.display = id === 'invoice' ? 'flex' : 'none';
       document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
-      // highlight topbar buttons
       const hBtn = document.getElementById('histNavBtn');
       if (hBtn) hBtn.style.background = id === 'history' ? 'rgba(255,255,255,.28)' : 'rgba(255,255,255,.1)';
       const aBtn = document.getElementById('adminTopBtn');
@@ -3438,47 +3695,64 @@
     }
     function closeSettings() { document.getElementById('sPanel').classList.remove('open'); document.getElementById('sDim').classList.remove('on'); }
     async function saveSettings() {
-      // সব user এর জন্য localStorage এ save
+      const isAdmin = CU?.role === 'admin';
+      const uKey = isAdmin ? 'admin' : (CU?.uid || 'user');
+      // User-specific save
       ['prefix', 'lastno', 'approved'].forEach(k => {
-        localStorage.setItem('inv_' + k, document.getElementById('s_' + k).value);
+        localStorage.setItem('inv_' + uKey + '_' + k, document.getElementById('s_' + k).value);
+        localStorage.setItem('inv_' + k, document.getElementById('s_' + k).value); // backward compat
       });
-
-      if (CU?.role === 'admin') {
-        // Admin হলে branch info ও localStorage এ save
+      if (isAdmin) {
         ['branch', 'addr', 'mobile'].forEach(k => {
+          localStorage.setItem('inv_admin_' + k, document.getElementById('s_' + k).value);
           localStorage.setItem('inv_' + k, document.getElementById('s_' + k).value);
         });
-        // সব কিছু Firestore এ sync করো
         await saveSharedSettings();
-        addAudit(CU.uid, 'SETTINGS', 'Updated all settings (branch + invoice config)');
-        toast('Settings saved & synced to all devices!', 's');
+        addAudit(CU.uid, 'SETTINGS', 'Admin updated settings');
+        toast('Settings saved & synced!', 's');
       } else {
+        // User নিজের branch info save (readonly fields এ পরিবর্তন নেই, শুধু prefix/lastno/approved)
         toast('Settings saved!', 's');
       }
-
       closeSettings();
       document.getElementById('invoiceNo').value = nextNo();
       updatePills();
     }
     function loadSettings() {
-      const D = {
-        branch: '(10032) Daulatpur Khulna',
-        addr: 'Daulatpur-9202, Khulna city corporation, Khulna.',
-        mobile: '01325050006',
-        prefix: 'SI-DAU-',
-        lastno: '123735',
-        approved: 'Murad Hossain'
+      const isAdmin = CU?.role === 'admin';
+      // User-specific key prefix — admin এর HQ, user এর নিজের
+      const uKey = isAdmin ? 'admin' : (CU?.uid || 'user');
+      const D = isAdmin ? {
+        branch: 'Head Office', addr: 'Head Office, Jamuna Electronics & Automobiles.', mobile: '01680801331',
+        prefix: 'SI-HQ-', lastno: '123735', approved: 'Administrator'
+      } : {
+        branch: CU?.branch || '—', addr: '', mobile: '',
+        prefix: 'SI-' + (CU?.uid||'USR').toUpperCase().slice(0,3) + '-', lastno: '100001', approved: CU?.name || ''
       };
-      Object.keys(D).forEach(k => {
+      // Admin এর fields editable, user এর branch fields readonly (unless own)
+      const branchFields = ['branch','addr','mobile'];
+      branchFields.forEach(k => {
         const el = document.getElementById('s_' + k);
-        if (el) el.value = localStorage.getItem('inv_' + k) || D[k];
+        if (el) {
+          const stored = localStorage.getItem('inv_' + uKey + '_' + k) || localStorage.getItem('inv_' + k) || D[k];
+          el.value = stored;
+          el.readOnly = !isAdmin; // Admin freely editable; user readonly (request system)
+        }
       });
-      // Topbar branch pill update
-      const branchVal = localStorage.getItem('inv_branch') || D.branch;
+      ['prefix','lastno','approved'].forEach(k => {
+        const el = document.getElementById('s_' + k);
+        if (el) el.value = localStorage.getItem('inv_' + uKey + '_' + k) || localStorage.getItem('inv_' + k) || D[k];
+      });
+      // Topbar pill
+      const branchVal = localStorage.getItem('inv_' + uKey + '_branch') || localStorage.getItem('inv_branch') || D.branch;
       const pb = document.getElementById('pillBranch');
       if (pb) pb.textContent = branchVal;
     }
-    const gs = k => (document.getElementById('s_' + k) || {}).value || '';
+    const gs = k => {
+      // User-specific setting আগে দেখো, না থাকলে shared
+      const uKey = (CU?.role === 'admin') ? 'admin' : (CU?.uid || 'user');
+      return localStorage.getItem('inv_' + uKey + '_' + k) || localStorage.getItem('inv_' + k) || (document.getElementById('s_' + k) || {}).value || '';
+    };
 
     function openReqModal(field) {
       _reqField = field;
@@ -3587,19 +3861,18 @@
     }
     function showDB() {
       const c = document.getElementById('dbChip');
+      const cm = document.getElementById('dbChipMobile');
       if (!productDB.length) {
-        c.className = 'db-chip no';
-        c.textContent = '⚫ No DB';
+        if(c){ c.className = 'db-chip no tbar-desktop'; c.textContent = '⚫ No DB'; }
+        if(cm){ cm.className = 'db-chip no'; cm.textContent = '⚫ No DB'; }
         return;
       }
       const isAdmin = CU?.role === 'admin';
-      c.className = 'db-chip ok';
-      c.textContent = isAdmin
-        ? '🟢 ' + productDB.length + 'p (M)'
-        : '🟢 ' + productDB.length + 'p';
-      c.title = isAdmin
-        ? productDB.length + ' products (Master DB)'
-        : productDB.length + ' products (Personal DB)';
+      const cls = 'db-chip ok';
+      const txt = isAdmin ? '🟢 ' + productDB.length + 'p (M)' : '🟢 ' + productDB.length + 'p';
+      const ttl = isAdmin ? productDB.length + ' products (Master DB)' : productDB.length + ' products (Personal DB)';
+      if(c){ c.className = cls + ' tbar-desktop'; c.textContent = txt; c.title = ttl; }
+      if(cm){ cm.className = cls; cm.textContent = txt; cm.title = ttl; }
     }
 
     async function resetPersonalDB() {
@@ -3905,8 +4178,37 @@
     ═══════════════════════════════════════════ */
     let rowId = 0, acIdx = {};
     document.addEventListener('keydown', e => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { if (document.getElementById('mainInvoice')?.style.display !== 'none') addRow(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { if (document.getElementById('mainInvoice')?.style.display !== 'none') addRowSafe(); }
     });
+
+    function addRowSafe() {
+      // Last row complete কিনা check করো
+      const rows = document.querySelectorAll('#productRows tr');
+      if (rows.length > 0) {
+        const lastRow = rows[rows.length - 1];
+        const id = lastRow.id.replace('r', '');
+        const nameInp = lastRow.querySelector('input[type=text]');
+        const priceInp = document.getElementById('up' + id);
+        const nameVal = nameInp?.value?.trim() || '';
+        const priceVal = priceInp?.value?.trim() || '';
+        if (!nameVal || !priceVal || parseFloat(priceVal) <= 0) {
+          // Row incomplete — highlight করো
+          lastRow.style.transition = 'background .2s';
+          lastRow.style.background = '#fff1f2';
+          lastRow.style.outline = '2px solid #ef4444';
+          lastRow.style.borderRadius = '4px';
+          nameInp?.focus();
+          toast('⚠ আগের row টি আগে সম্পূর্ণ করুন (Product name ও Price দিন)।', 'w', 3000);
+          setTimeout(() => {
+            lastRow.style.background = '';
+            lastRow.style.outline = '';
+          }, 2500);
+          return;
+        }
+      }
+      addRow();
+    }
+
     function addRow(name = '', barcode = '', unit = 1, price = '') {
       rowId++; const id = rowId;
       const tbody = document.getElementById('productRows');
@@ -3925,8 +4227,27 @@
     <td style="text-align:right"><input type="number" min="0" value="${price}" placeholder="0.00" inputmode="numeric" onkeypress="return /[0-9.]/.test(event.key)" oninput="calc()" id="up${id}" style="width:96px;text-align:right"></td>
     <td class="col-total" id="rt${id}">0.00</td>
     <td style="text-align:center"><button class="btn-rm" onclick="rmRow(${id})" title="Remove">×</button></td>`;
+      // Previous rows এর highlight সরাও
+      document.querySelectorAll('#productRows tr').forEach(r => {
+        r.style.background = '';
+        r.style.outline = '';
+        r.style.boxShadow = '';
+      });
       tbody.appendChild(tr); renum(); calc();
+      // New row highlight
+      tr.style.background = '#f0fdf4';
+      tr.style.boxShadow = 'inset 0 0 0 1.5px #86efac';
+      tr.style.borderRadius = '4px';
       setTimeout(() => tr.querySelector('input')?.focus(), 35);
+      // Fade out highlight when user fills it
+      const inp = tr.querySelector('input[type=text]');
+      if (inp) {
+        inp.addEventListener('input', function onFill() {
+          tr.style.background = '';
+          tr.style.boxShadow = '';
+          inp.removeEventListener('input', onFill);
+        }, { once: true });
+      }
     }
     function rmRow(id) { document.getElementById('r' + id)?.remove(); renum(); calc(); }
     function renum() { document.querySelectorAll('#productRows tr').forEach((tr, i) => tr.cells[0].textContent = i + 1); }
@@ -4083,10 +4404,22 @@
     function doPreview() { if (!validateForm()) return; buildInv(null); document.getElementById('pvDim').classList.add('on'); }
 
     function closePv() {
-      document.getElementById('pvDim').classList.remove('on');
-      if (document.getElementById('pvDim')._wasNew) {
-        document.getElementById('pvDim')._wasNew = false;
+      const dim = document.getElementById('pvDim');
+      dim.classList.remove('on');
+      const wasNew = dim._wasNew;
+      const wasEdit = dim._wasEdit;
+      dim._wasNew = false;
+      dim._wasEdit = false;
+      if (wasNew) {
         setTimeout(() => { bumpNo(); resetForm(); toast('Ready for new invoice!', 's'); }, 400);
+      } else if (wasEdit) {
+        // Edit এর পরেও form clear করে দাও
+        setTimeout(() => {
+          document.getElementById('editModeBanner')?.remove();
+          bumpNo(); resetForm();
+          toast('✅ Invoice updated! New invoice ready.', 's');
+          goPage('history'); // History তে পাঠাও যাতে updated invoice দেখা যায়
+        }, 400);
       }
     }
 
@@ -4602,8 +4935,21 @@
       const srch = (document.getElementById('srchTxt')?.value || '').toLowerCase();
       const sd = document.getElementById('srchDate')?.value || '';
       const stFilter = document.getElementById('srchStatus')?.value || '';
+      const userFilter = document.getElementById('srchUser')?.value || '';
       const isAdmin = CU?.role === 'admin';
       let all = getInvs();
+
+      // Admin এর জন্য user filter dropdown populate করো
+      if (isAdmin) {
+        const sel = document.getElementById('srchUser');
+        if (sel) {
+          sel.style.display = 'inline-block';
+          const users = getUsers().filter(u => u.role !== 'admin');
+          const cur = sel.value;
+          sel.innerHTML = '<option value="">All Users</option>' +
+            users.map(u => `<option value="${u.uid}" ${cur === u.uid ? 'selected' : ''}>${u.name || u.uid}</option>`).join('');
+        }
+      }
 
       if (!isAdmin) {
         // Normal user: only their own invoices
@@ -4616,6 +4962,7 @@
         // Admin sees all
         if (stFilter === 'active') all = all.filter(x => !x.deleted);
         else if (stFilter === 'deleted') all = all.filter(x => x.deleted);
+        if (userFilter) all = all.filter(x => x.savedBy === userFilter);
       }
 
       if (srch) all = all.filter(x => (x.invNo || '').toLowerCase().includes(srch) || (x.cName || '').toLowerCase().includes(srch));
@@ -4634,7 +4981,8 @@
       if (!all.length) { tbody.innerHTML = ''; if (empty) empty.style.display = 'block'; return; }
       if (empty) empty.style.display = 'none';
 
-      tbody.innerHTML = all.map(iv => `<tr>
+      tbody.innerHTML = all.map(iv => `<tr data-invno="${iv.invNo}" class="hist-row">
+    <td style="text-align:center;"><input type="checkbox" class="hist-chk" value="${iv.invNo}" onchange="onHistCheckChange()" style="cursor:pointer;width:15px;height:15px;"></td>
     <td><strong>${iv.invNo || '—'}</strong></td>
     <td>${iv.invDate || '—'}</td>
     <td>${iv.cName || '—'}</td>
@@ -4649,14 +4997,116 @@
       ${!iv.deleted ? `<button class="xbtn blk" onclick="editInvoice('${iv.invNo}')">✏ Edit</button>` : ''}
       ${(iv.editHistory && iv.editHistory.length) ? `<button class="xbtn" onclick="showEditHistory('${iv.invNo}')" style="background:#ede9fe;color:#7c3aed;border:1px solid #ddd6fe;font-size:11px;">🕓 ${iv.editHistory.length}</button>` : ''}
       ${!iv.deleted && isAdmin ? `<button class="xbtn del" onclick="softDelete('${iv.invNo}')">🗑 Delete</button>` : ''}
-      ${!iv.deleted && !isAdmin ? `<button class="xbtn del" onclick="requestDelete('${iv.invNo}')">🗑 Request Delete</button>` : ''}
+      ${!iv.deleted && !isAdmin ? `<button class="xbtn del" onclick="userSoftDelete('${iv.invNo}')">🗑 Delete</button>` : ''}
       ${iv.deleted && isAdmin ? `<button class="xbtn rst" onclick="restoreInv('${iv.invNo}')">↩ Restore</button>` : ''}
-      ${iv.deleted && !isAdmin ? `<span style="font-size:10.5px;color:var(--txt3);font-style:italic;">⏳ Pending admin</span>` : ''}
+      ${iv.deleted && !isAdmin ? `<span style="font-size:10.5px;color:var(--txt3);font-style:italic;">Deleted</span>` : ''}
     </td>
   </tr>`).join('');
+  // Bulk select reset
+  const selAll = document.getElementById('selectAllHist');
+  if (selAll) selAll.checked = false;
+  document.getElementById('bulkToolbar').style.display = 'none';
+    }
+
+
+    /* ═══════════════════════════════════════
+       BULK SELECT — History
+    ═══════════════════════════════════════ */
+    function getSelectedInvNos() {
+      return [...document.querySelectorAll('.hist-chk:checked')].map(c => c.value);
+    }
+
+    function onHistCheckChange() {
+      const selected = getSelectedInvNos();
+      const total = document.querySelectorAll('.hist-chk').length;
+      const toolbar = document.getElementById('bulkToolbar');
+      const countEl = document.getElementById('bulkCount');
+      const selAll = document.getElementById('selectAllHist');
+      if (toolbar) toolbar.style.display = selected.length > 0 ? 'flex' : 'none';
+      if (countEl) countEl.textContent = selected.length + ' টি selected';
+      if (selAll) selAll.indeterminate = selected.length > 0 && selected.length < total;
+      if (selAll) selAll.checked = selected.length === total && total > 0;
+      // Selected rows highlight
+      document.querySelectorAll('.hist-row').forEach(row => {
+        const chk = row.querySelector('.hist-chk');
+        row.style.background = chk?.checked ? '#eff6ff' : '';
+      });
+    }
+
+    function toggleSelectAll(masterChk) {
+      document.querySelectorAll('.hist-chk').forEach(c => c.checked = masterChk.checked);
+      onHistCheckChange();
+    }
+
+    function clearBulkSelect() {
+      document.querySelectorAll('.hist-chk').forEach(c => c.checked = false);
+      const selAll = document.getElementById('selectAllHist');
+      if (selAll) { selAll.checked = false; selAll.indeterminate = false; }
+      document.getElementById('bulkToolbar').style.display = 'none';
+      document.querySelectorAll('.hist-row').forEach(r => r.style.background = '');
+    }
+
+    function bulkExport() {
+      const selected = getSelectedInvNos();
+      if (!selected.length) return;
+      const invs = getInvs().filter(x => selected.includes(x.invNo));
+      // exportHistXlsx কে selected invoice দিয়ে call করো
+      _exportInvsToXlsx(invs, 'selected_invoices');
+      clearBulkSelect();
+      toast('✅ ' + invs.length + ' টি invoice export হয়েছে।', 's');
+    }
+
+    async function bulkDelete() {
+      const selected = getSelectedInvNos();
+      if (!selected.length) return;
+      const isAdmin = CU?.role === 'admin';
+      cfmShow({
+        icon: '🗑️',
+        title: 'Bulk Delete?',
+        msg: `<strong>${selected.length}</strong> টি invoice delete করবেন?<br>
+          <span style="font-size:12px;color:${isAdmin ? '#64748b' : '#16a34a'}">
+            ${isAdmin ? 'Admin Trash এ যাবে।' : '✔ Admin Trash এ সংরক্ষিত থাকবে।'}
+          </span>`,
+        okLabel: '🗑 Delete ' + selected.length + ' টি',
+        okColor: 'var(--cr)',
+        cb: async () => {
+          let count = 0;
+          for (const invNo of selected) {
+            const iv = getInvs().find(x => x.invNo === invNo);
+            if (!iv || iv.deleted) continue;
+            iv.deleted = true;
+            iv.deletedBy = CU?.uid;
+            iv.deletedAt = new Date().toISOString();
+            if (!isAdmin) iv.deletedByRole = 'user';
+            await setInv(iv);
+            count++;
+          }
+          addAudit(CU.uid, 'BULK_DELETE', count + ' invoices bulk deleted');
+          toast('🗑 ' + count + ' টি invoice deleted।', 'w', 4000);
+          clearBulkSelect();
+          renderHist();
+        }
+      });
+    }
+
+    function _exportInvsToXlsx(invs, filename) {
+      if (!invs.length) { toast('কোনো invoice নেই।', 'e'); return; }
+      const rows = [['Invoice No', 'Date', 'Customer', 'Mobile', 'Items', 'Total (৳)', 'Paid (৳)', 'Saved By']];
+      invs.forEach(iv => rows.push([
+        iv.invNo || '', iv.invDate || '', iv.cName || '', iv.cMob || '',
+        (iv.items || []).length,
+        Number(iv.mrp || 0).toFixed(2),
+        Number(iv.paid || 0).toFixed(2),
+        iv.savedBy || ''
+      ]));
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Invoices');
+      XLSX.writeFile(wb, filename + '_' + new Date().toISOString().slice(0, 10) + '.xlsx');
     }
 
     function softDelete(invNo) {
+      if (CU?.role !== 'admin') { toast('⛔ Access denied.', 'e'); return; }
       cfmShow({
         icon: '🗑️', title: 'Delete Invoice?', msg: `Move invoice <strong>${invNo}</strong> to trash?<br><span style="font-size:12px;color:#64748b">Admin can restore it from Trash.</span>`, okLabel: 'Delete', okColor: 'var(--cr)', cb: async () => {
           const iv = getInvs().find(x => x.invNo === invNo);
@@ -4670,64 +5120,47 @@
     }
 
     /* ═══════════════════════════════════════════
-   USER DELETE REQUEST TO ADMIN
+   USER SOFT DELETE — Option A
+   User এর কাছ থেকে সাথে সাথে সরে যাবে,
+   Admin এর কাছে Trash এ থাকবে (restore করা যাবে)
 ═══════════════════════════════════════════ */
-    async function requestDelete(invNo) {
+    function userSoftDelete(invNo) {
       const iv = getInvs().find(x => x.invNo === invNo);
       if (!iv) { toast('Invoice not found.', 'e'); return; }
 
-      // আগে কোনো pending request আছে কিনা check করো
-      const existing = getReqs().find(r =>
-        r.field === 'DELETE_REQUEST' &&
-        r.invNo === invNo &&
-        r.status === 'pending'
-      );
-      if (existing) {
-        toast('এই invoice এর জন্য আগেই request পাঠানো হয়েছে। Admin এর approval এর অপেক্ষায়।', 'w', 4000);
-        return;
-      }
-
-      showModal('🗑 Delete Request', `
-    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:10px 13px;margin-bottom:12px;">
-      <div style="font-size:12.5px;font-weight:700;color:#991b1b;margin-bottom:4px;">⚠ Invoice: ${invNo}</div>
-      <div style="font-size:12px;color:#7f1d1d;">Customer: ${iv.cName || '—'} | Paid: ৳${Number(iv.paid || 0).toFixed(2)}</div>
-    </div>
-    <div class="mf">
-      <label style="font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;">Delete করার কারণ লিখুন <span style="color:var(--cr)">*</span></label>
-      <textarea id="delReqReason" rows="3" placeholder="কেন delete করতে চাইছেন বিস্তারিত লিখুন..."
-        style="width:100%;border:1.5px solid var(--bdr);border-radius:6px;padding:8px 10px;font-size:13px;font-family:var(--f);color:var(--txt);background:var(--inp);resize:vertical;margin-top:4px;"></textarea>
-    </div>
-    <div style="font-size:11px;color:var(--txt3);margin-top:6px;">📬 Request টি admin এর কাছে পাঠানো হবে। Admin approve করলে invoice delete হবে।</div>
-  `, async () => {
-        const reason = document.getElementById('delReqReason')?.value?.trim();
-        if (!reason) { toast('কারণ লিখুন।', 'e'); return false; }
-
-        const req = {
-          field: 'DELETE_REQUEST',
-          invNo: invNo,
-          invData: { cName: iv.cName, paid: iv.paid, invDate: iv.invDate },
-          msg: reason,
-          from: CU?.uid || '?',
-          fromName: CU?.name || '?',
-          time: new Date().toISOString(),
-          status: 'pending'
-        };
-        await addReqDoc(req);
-        // Admin notification for delete request
-        const allReqsNow = getReqs();
-        const thisDelReq = allReqsNow.find(r => r.field === 'DELETE_REQUEST' && r.invNo === invNo && r.from === (CU?.uid||'?') && r.status === 'pending');
-        try {
-          await _fdb.collection('ji_notifications').add({
-            to: 'admin', type: 'delete_request',
-            title: '🗑 Invoice Delete Request',
-            body: '"' + (CU.name||CU.uid) + '" invoice ' + invNo + ' delete করতে চাইছে। কারণ: ' + reason.slice(0,80),
-            time: new Date().toISOString(), readBy: [], sentBy: CU?.uid||'?',
-            reqId: thisDelReq?._id || null, invNo: invNo
-          });
-        } catch(notifErr) { console.warn('Del req notif failed', notifErr); }
-        addAudit(CU.uid, 'DELETE_REQUEST', 'Delete request for invoice ' + invNo + ': ' + reason);
-        toast('Delete request পাঠানো হয়েছে। Admin approve করলে delete হবে।', 's', 4000);
-        return true;
+      cfmShow({
+        icon: '🗑️',
+        title: 'Invoice Delete করবেন?',
+        msg: `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 13px;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:700;color:#991b1b;">Invoice: ${invNo}</div>
+          <div style="font-size:12px;color:#7f1d1d;margin-top:3px;">Customer: ${iv.cName||'—'} | Paid: ৳${Number(iv.paid||0).toFixed(2)}</div>
+        </div>
+        <div style="font-size:12.5px;color:#475569;line-height:1.6;">
+          Delete করলে আপনার History থেকে <strong>সাথে সাথে সরে যাবে।</strong><br>
+          <span style="color:#16a34a;font-size:11.5px;">✔ Admin প্রয়োজনে restore করতে পারবেন।</span>
+        </div>`,
+        okLabel: '🗑 Delete',
+        okColor: 'var(--cr)',
+        cb: async () => {
+          iv.deleted = true;
+          iv.deletedBy = CU?.uid;
+          iv.deletedAt = new Date().toISOString();
+          iv.deletedByRole = 'user';
+          await setInv(iv);
+          addAudit(CU.uid, 'INVOICE_DELETE', 'User deleted invoice ' + invNo);
+          // Admin কে silent notification (badge update এর জন্য)
+          try {
+            await _fdb.collection('ji_notifications').add({
+              to: 'admin', type: 'info',
+              title: 'ℹ Invoice Deleted',
+              body: '"' + (CU.name||CU.uid) + '" invoice ' + invNo + ' delete করেছে। Admin Panel → Trash এ আছে।',
+              time: new Date().toISOString(), readBy: [], sentBy: CU?.uid||'?'
+            });
+          } catch(e) {}
+          renderHist();
+          // Success toast with undo-like feel
+          toast('🗑 Invoice ' + invNo + ' deleted. Admin Trash এ সংরক্ষিত আছে।', 'w', 5000);
+        }
       });
     }
 
@@ -5042,8 +5475,22 @@
 
     /* ─── Admin: Users ─── */
     function renderAdmUsers() {
-      const users = getUsers(), invs = getInvs();
-      document.getElementById('userTbody').innerHTML = users.map(u => {
+      const srch = (document.getElementById('admUserSearch')?.value || '').toLowerCase();
+      const stFlt = document.getElementById('admUserStatus')?.value || '';
+      const dtFrom = document.getElementById('admUserDateFrom')?.value || '';
+      const dtTo = document.getElementById('admUserDateTo')?.value || '';
+      let users = getUsers();
+      // Filter
+      if (srch) users = users.filter(u =>
+        (u.uid||'').toLowerCase().includes(srch) ||
+        (u.name||'').toLowerCase().includes(srch) ||
+        (u.branch||'').toLowerCase().includes(srch)
+      );
+      if (stFlt) users = users.filter(u => u.status === stFlt);
+      if (dtFrom) users = users.filter(u => (u.created||'').slice(0,10) >= dtFrom);
+      if (dtTo) users = users.filter(u => (u.created||'').slice(0,10) <= dtTo);
+      const invs = getInvs();
+      document.getElementById('userTbody').innerHTML = users.length ? users.map(u => {
         let decodedPwd = '—';
         try { decodedPwd = atob(u.pwd || ''); } catch (e) { decodedPwd = '(encrypted)'; }
         return `<tr>
@@ -5055,7 +5502,7 @@
     <td style="font-size:10.5px;color:var(--txt3)">${(u.created || '').slice(0, 10)}</td>
     <td style="text-align:center">${invs.filter(x => x.savedBy === u.uid).length}</td>
     <td>
-      <span style="font-family:var(--fm);font-size:11.5px;background:#f1f5f9;padding:3px 8px;border-radius:4px;border:1px solid var(--bdr);color:var(--txt2);user-select:all;">${decodedPwd}</span>
+      <span id="pwdSpan_${u.uid}" style="font-family:var(--fm);font-size:11.5px;background:#f1f5f9;padding:3px 8px;border-radius:4px;border:1px solid var(--bdr);color:var(--txt2);user-select:all;filter:blur(4px);cursor:pointer;transition:filter .2s;" onclick="revealPwd('${u.uid}')" title="Click করুন password দেখতে">••••••</span>
       <button class="xbtn ok" onclick="viewPwdHistory('${u.uid}')" style="font-size:10px;margin-left:4px">🔑 History</button>
       ${u.uid !== 'admin' ? `<button class="xbtn blk" onclick="adminChgPwd('${u.uid}')" style="margin-left:2px;font-size:10px">✏ Change</button>` : ''}
     </td>
@@ -5063,15 +5510,18 @@
       ${u.status === 'pending' ? `<button class="xbtn ok" onclick="appUser('${u.uid}')">✔ Approve</button>` : ''}
       ${u.status === 'active' && u.role !== 'admin' ? `<button class="xbtn blk" onclick="togUser('${u.uid}','inactive')">⏸ Disable</button>` : ''}
       ${u.status === 'inactive' ? `<button class="xbtn ok" onclick="togUser('${u.uid}','active')">▶ Enable</button>` : ''}
+      ${u.role !== 'admin' ? `<button class="xbtn" onclick="adminSetUserBranch('${u.uid}')" style="background:#ede9fe;color:#6d28d9;border:1px solid #ddd6fe;font-size:10.5px;" title="User এর branch info set করুন">🏢 Branch</button>` : ''}
       ${u.role !== 'admin' ? `<button class="xbtn del" onclick="delUser('${u.uid}')">✖</button>` : ''}
     </td>
   </tr>`;
-      }).join('');
+      }).join('') : '<tr><td colspan="9" style="text-align:center;padding:20px;color:#94a3b8;">কোনো user পাওয়া যায়নি।</td></tr>';
     }
 
     /* ─── Admin: Requests ─── */
     function renderAdmReqs() {
-      const reqs = getReqs();
+      // DELETE_REQUEST এখন obsolete (user soft delete ব্যবহার করছে)
+      // শুধু non-delete requests দেখাও
+      const reqs = getReqs().filter(r => r.field !== 'DELETE_REQUEST');
       const empty = document.getElementById('reqEmpty');
       if (!reqs.length) { document.getElementById('reqBody').innerHTML = ''; empty.style.display = 'block'; return; }
       empty.style.display = 'none';
@@ -5113,7 +5563,7 @@
       r.resolvedBy = CU.uid;
 
       if (action === 'approved') {
-        if (r.field === 'Branch Code & Name') { localStorage.setItem('inv_branch', r.msg); loadSettings(); }
+        if (r.field === 'Branch Code & Name') { const rUKey = (CU?.role==='admin'?'admin':(r.from||CU?.uid||'user')); localStorage.setItem('inv_' + rUKey + '_branch', r.msg); localStorage.setItem('inv_branch', r.msg); loadSettings(); }
         if (r.field === 'Branch Address') { localStorage.setItem('inv_addr', r.msg); loadSettings(); }
         if (r.field === 'Branch Mobile') { localStorage.setItem('inv_mobile', r.msg); loadSettings(); }
 
@@ -5166,7 +5616,7 @@
         const newVal = document.getElementById('reqEditVal').value.trim();
         if (!newVal) { toast('Enter a value.', 'e'); return false; }
         r.msg = newVal; r.status = 'approved'; r.resolvedAt = new Date().toISOString(); r.resolvedBy = CU.uid;
-        if (r.field === 'Branch Code & Name') { localStorage.setItem('inv_branch', newVal); loadSettings(); }
+        if (r.field === 'Branch Code & Name') { const rUKey2 = (CU?.role==='admin'?'admin':(r.from||CU?.uid||'user')); localStorage.setItem('inv_' + rUKey2 + '_branch', newVal); localStorage.setItem('inv_branch', newVal); loadSettings(); }
         if (r.field === 'Branch Address') { localStorage.setItem('inv_addr', newVal); loadSettings(); }
         if (r.field === 'Branch Mobile') { localStorage.setItem('inv_mobile', newVal); loadSettings(); }
         if (r._id) await updateReqDoc(r._id, { msg: newVal, status: 'approved', resolvedAt: r.resolvedAt, resolvedBy: r.resolvedBy });
@@ -5178,8 +5628,22 @@
     /* ─── Admin: All Invoices ─── */
     function renderAdmInvs() {
       const q = (document.getElementById('admInvSrch')?.value || '').toLowerCase();
+      const userFlt = document.getElementById('admInvUser')?.value || '';
+      const dtFrom = document.getElementById('admInvDateFrom')?.value || '';
+      const dtTo = document.getElementById('admInvDateTo')?.value || '';
+      // User dropdown populate
+      const sel = document.getElementById('admInvUser');
+      if (sel) {
+        const users = getUsers().filter(u => u.role !== 'admin');
+        const cur = sel.value;
+        sel.innerHTML = '<option value="">All Users</option>' +
+          users.map(u => `<option value="${u.uid}" ${cur===u.uid?'selected':''}>${u.name||u.uid}</option>`).join('');
+      }
       let invs = getInvs().filter(x => !x.deleted);
-      if (q) invs = invs.filter(x => (x.invNo || '').toLowerCase().includes(q) || (x.cName || '').toLowerCase().includes(q));
+      if (q) invs = invs.filter(x => (x.invNo||'').toLowerCase().includes(q) || (x.cName||'').toLowerCase().includes(q));
+      if (userFlt) invs = invs.filter(x => x.savedBy === userFlt);
+      if (dtFrom) invs = invs.filter(x => (x.invDate||'') >= dtFrom);
+      if (dtTo) invs = invs.filter(x => (x.invDate||'') <= dtTo);
       document.getElementById('admInvBody').innerHTML = invs.map(iv => `<tr>
     <td><strong>${iv.invNo || '—'}</strong></td>
     <td>${iv.invDate || '—'}</td>
@@ -5201,25 +5665,37 @@
       const empty = document.getElementById('trashEmpty');
       if (!deleted.length) { document.getElementById('trashBody').innerHTML = ''; empty.style.display = 'block'; return; }
       empty.style.display = 'none';
-      document.getElementById('trashBody').innerHTML = deleted.map(iv => `<tr>
+      // Sort: সবচেয়ে নতুন delete উপরে
+      deleted.sort((a,b) => (b.deletedAt||'').localeCompare(a.deletedAt||''));
+      document.getElementById('trashBody').innerHTML = deleted.map(iv => {
+        const byUser = iv.deletedByRole === 'user';
+        const delByName = (() => {
+          const u = getUsers().find(x => x.uid === iv.deletedBy);
+          return u ? (u.name || u.uid) : (iv.deletedBy || '—');
+        })();
+        return `<tr>
     <td><strong>${iv.invNo || '—'}</strong></td>
     <td>${iv.invDate || '—'}</td>
     <td>${iv.cName || '—'}</td>
     <td style="font-family:var(--fm)">৳${Number(iv.paid || 0).toFixed(2)}</td>
     <td>
-  <span class="badge deleted">${iv.deletedBy || '—'}</span>
-  ${iv.deleteReason ? `<div style="font-size:10px;color:var(--txt3);margin-top:2px;max-width:140px;white-space:normal;">📝 ${iv.deleteReason.slice(0, 60)}${iv.deleteReason.length > 60 ? '...' : ''}</div>` : ''}
-  ${iv.deleteApprovedBy ? `<div style="font-size:10px;color:var(--cg2);margin-top:1px;">✔ Approved by: ${iv.deleteApprovedBy}</div>` : ''}
-</td>
-    <td style="font-size:11px;color:var(--txt3)">${(iv.deletedAt || '').slice(0, 16)}</td>
-    <td style="display:flex;gap:4px">
-      <button class="xbtn rst" onclick="restoreInv('${iv.invNo}')">↩ Restore</button>
-      <button class="xbtn prm" onclick="permDelete('${iv.invNo}')">💀 Delete</button>
+      <span class="badge ${byUser ? 'pending' : 'deleted'}" style="font-size:10px;">
+        ${byUser ? '👤 User' : '🔧 Admin'}
+      </span>
+      <div style="font-size:11px;color:var(--txt2);margin-top:2px;">${delByName}</div>
+      ${iv.deleteReason ? `<div style="font-size:10px;color:var(--txt3);margin-top:1px;max-width:130px;white-space:normal;">📝 ${iv.deleteReason.slice(0,50)}${iv.deleteReason.length>50?'...':''}</div>` : ''}
     </td>
-  </tr>`).join('');
+    <td style="font-size:11px;color:var(--txt3)">${(iv.deletedAt||'').slice(0,16).replace('T',' ')}</td>
+    <td style="display:flex;gap:4px;flex-wrap:wrap;">
+      <button class="xbtn rst" onclick="restoreInv('${iv.invNo}')" title="User এর History তে ফিরিয়ে দাও">↩ Restore</button>
+      <button class="xbtn prm" onclick="permDelete('${iv.invNo}')" title="চিরতরে মুছে দাও">💀 Perm Delete</button>
+    </td>
+  </tr>`;
+      }).join('');
     }
 
     async function restoreInv(invNo) {
+      if (CU?.role !== 'admin') { toast('⛔ Access denied.', 'e'); return; }
       const iv = getInvs().find(x => x.invNo === invNo);
       if (!iv) return;
       const originalOwner = iv.deletedBy || iv.savedBy;
@@ -5261,6 +5737,7 @@
     }
 
     function permDelete(invNo) {
+      if (CU?.role !== 'admin') { toast('⛔ Access denied.', 'e'); return; }
       cfmShow({
         icon: '💀', title: 'Permanently Delete?', msg: `Invoice <strong>${invNo}</strong> will be deleted forever.<br><span style="color:var(--cr);font-size:12px;font-weight:700;">This CANNOT be undone!</span>`, okLabel: 'Delete Forever', okColor: '#be123c', cb: async () => {
           await permDeleteInv(invNo);
@@ -5285,7 +5762,125 @@
     }
 
     /* ─── Admin: User Actions ─── */
-    async function appUser(uid) { const u = getUsers(), x = u.find(v => v.uid === uid); if (x) { x.status = 'active'; await upsertUser(x); addAudit(CU.uid, 'USER_APPROVE', uid + ' approved'); renderAdmUsers(); renderAdmin(); toast(uid + ' approved.', 's'); } }
+
+    let _pwdRevealVerified = false; // একবার verify হলে session এ থাকবে
+
+    function revealPwd(uid) {
+      if (_pwdRevealVerified) {
+        // Already verified this session — directly show
+        _doRevealPwd(uid);
+        return;
+      }
+      // Admin password চাও
+      cfmShow({
+        icon: '🔐', title: 'Admin Password Required',
+        msg: `<div style="margin-top:8px;">
+          <label style="font-size:12px;font-weight:600;color:var(--txt2);display:block;margin-bottom:4px;">Password confirm করুন:</label>
+          <input type="password" id="adminVerifyPwd" placeholder="Admin password..." autofocus
+            style="width:100%;border:1.5px solid var(--bdr);border-radius:6px;padding:8px 10px;font-size:13px;font-family:var(--f);"
+            onkeydown="if(event.key==='Enter'){document.querySelector('.cfm-ok')?.click();}">
+        </div>`,
+        okLabel: '🔓 Verify & Show',
+        okColor: 'var(--c1)',
+        cb: () => {
+          const entered = document.getElementById('adminVerifyPwd')?.value || '';
+          const adminUser = getUsers().find(u => u.uid === CU.uid);
+          let correct = false;
+          try { correct = (atob(adminUser?.pwd || '') === entered); } catch(e) {}
+          if (!correct) { toast('❌ Password ভুল হয়েছে।', 'e'); return false; }
+          _pwdRevealVerified = true;
+          _doRevealPwd(uid);
+        }
+      });
+      // autofocus
+      setTimeout(() => document.getElementById('adminVerifyPwd')?.focus(), 200);
+    }
+
+    function _doRevealPwd(uid) {
+      const u = getUsers().find(x => x.uid === uid);
+      if (!u) return;
+      let pwd = '—';
+      try { pwd = atob(u.pwd || ''); } catch(e) { pwd = '(encrypted)'; }
+      const span = document.getElementById('pwdSpan_' + uid);
+      if (span) {
+        span.style.filter = 'none';
+        span.textContent = pwd;
+        span.title = 'Click করুন লুকাতে';
+        span.onclick = () => {
+          span.style.filter = 'blur(4px)';
+          span.textContent = '••••••';
+          span.title = 'Click করুন password দেখতে';
+          span.onclick = () => revealPwd(uid);
+        };
+      }
+    }
+
+
+    function adminSetUserBranch(uid) {
+      if (CU?.role !== 'admin') { toast('⛔ Access denied.', 'e'); return; }
+      const u = getUsers().find(x => x.uid === uid);
+      if (!u) return;
+      const curBranch = localStorage.getItem('inv_' + uid + '_branch') || u.branch || '';
+      const curAddr   = localStorage.getItem('inv_' + uid + '_addr') || '';
+      const curMobile = localStorage.getItem('inv_' + uid + '_mobile') || '';
+      const curPrefix = localStorage.getItem('inv_' + uid + '_prefix') || 'SI-' + uid.toUpperCase().slice(0,3) + '-';
+      cfmShow({
+        icon: '🏢',
+        title: 'Set Branch Info — ' + (u.name || uid),
+        msg: `<div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--txt2);display:block;margin-bottom:3px;">Branch Code &amp; Name</label>
+            <input id="abf_branch" value="${curBranch}" placeholder="(10032) Daulatpur Khulna" style="width:100%;border:1.5px solid var(--bdr);border-radius:6px;padding:8px 10px;font-size:13px;font-family:var(--f);">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--txt2);display:block;margin-bottom:3px;">Branch Address</label>
+            <input id="abf_addr" value="${curAddr}" placeholder="Daulatpur-9202, Khulna." style="width:100%;border:1.5px solid var(--bdr);border-radius:6px;padding:8px 10px;font-size:13px;font-family:var(--f);">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--txt2);display:block;margin-bottom:3px;">Branch Mobile</label>
+            <input id="abf_mobile" value="${curMobile}" placeholder="01XXXXXXXXX" style="width:100%;border:1.5px solid var(--bdr);border-radius:6px;padding:8px 10px;font-size:13px;font-family:var(--f);">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--txt2);display:block;margin-bottom:3px;">Invoice Prefix</label>
+            <input id="abf_prefix" value="${curPrefix}" placeholder="SI-DAU-" style="width:100%;border:1.5px solid var(--bdr);border-radius:6px;padding:8px 10px;font-size:13px;font-family:var(--f);">
+          </div>
+        </div>`,
+        okLabel: '💾 Save for ' + uid,
+        okColor: '#6d28d9',
+        cb: async () => {
+          const branch = document.getElementById('abf_branch')?.value?.trim() || '';
+          const addr   = document.getElementById('abf_addr')?.value?.trim() || '';
+          const mobile = document.getElementById('abf_mobile')?.value?.trim() || '';
+          const prefix = document.getElementById('abf_prefix')?.value?.trim() || '';
+          localStorage.setItem('inv_' + uid + '_branch', branch);
+          localStorage.setItem('inv_' + uid + '_addr', addr);
+          localStorage.setItem('inv_' + uid + '_mobile', mobile);
+          localStorage.setItem('inv_' + uid + '_prefix', prefix);
+          // User object এও branch update করো
+          u.branch = branch;
+          await upsertUser(u);
+          addAudit(CU.uid, 'USER_BRANCH_SET', 'Set branch info for ' + uid + ': ' + branch);
+          toast('✅ ' + uid + ' এর branch info saved!', 's');
+        }
+      });
+      setTimeout(() => document.getElementById('abf_branch')?.focus(), 200);
+    }
+
+    async function appUser(uid) {
+      if (CU?.role !== 'admin') { toast('⛔ Access denied.', 'e'); return; }
+      const u = getUsers(), x = u.find(v => v.uid === uid);
+      if (x) {
+        x.status = 'active';
+        await upsertUser(x);
+        // User এর branch info localStorage এ set করো (যদি registration এ দেওয়া থাকে)
+        if (x.branch) localStorage.setItem('inv_' + uid + '_branch', x.branch);
+        if (x.addr) localStorage.setItem('inv_' + uid + '_addr', x.addr);
+        if (x.mobile) localStorage.setItem('inv_' + uid + '_mobile', x.mobile);
+        addAudit(CU.uid, 'USER_APPROVE', uid + ' approved');
+        renderAdmUsers(); renderAdmin();
+        toast(uid + ' approved.', 's');
+      }
+    }
 
     async function notifQuickApprove(notifId, uid, btn, type, invNo, reqId) {
       if (type === 'delete_request') {
@@ -5361,8 +5956,9 @@
         }
       });
     }
-    async function togUser(uid, st) { const u = getUsers(), x = u.find(v => v.uid === uid); if (x) { x.status = st; await upsertUser(x); addAudit(CU.uid, 'USER_STATUS', uid + ' → ' + st); renderAdmUsers(); renderAdmin(); toast(uid + ' → ' + st, 'w'); } }
+    async function togUser(uid, st) { if (CU?.role !== 'admin') { toast('⛔ Access denied.', 'e'); return; } const u = getUsers(), x = u.find(v => v.uid === uid); if (x) { x.status = st; await upsertUser(x); addAudit(CU.uid, 'USER_STATUS', uid + ' → ' + st); renderAdmUsers(); renderAdmin(); toast(uid + ' → ' + st, 'w'); } }
     function delUser(uid) {
+      if (CU?.role !== 'admin') { toast('⛔ Access denied.', 'e'); return; }
       cfmShow({
         icon: '👤', title: 'Delete User?', msg: `Delete user <strong>${uid}</strong>? This cannot be undone.`, okLabel: 'Delete User', okColor: 'var(--cr)', cb: async () => {
           await removeUser(uid); addAudit(CU.uid, 'USER_DELETE', uid + ' deleted'); renderAdmUsers(); renderAdmin(); toast(uid + ' deleted.', 'e');
@@ -5384,6 +5980,7 @@
     }
 
     function adminChgPwd(uid) {
+      if (CU?.role !== 'admin') { toast('⛔ Access denied.', 'e'); return; }
       showModal('🔑 Change Password for ' + uid, `
     <div class="mf"><label>New Password</label><div class="pwd-wrap"><input type="password" id="adNewPwd" placeholder="New password"><button type="button" class="eye-btn" onclick="toggleEye('adNewPwd',this)" tabindex="-1">👁</button></div></div>
     <div class="mf"><label>Confirm</label><div class="pwd-wrap"><input type="password" id="adConfPwd" placeholder="Repeat"><button type="button" class="eye-btn" onclick="toggleEye('adConfPwd',this)" tabindex="-1">👁</button></div></div>
@@ -5470,7 +6067,7 @@
           'restore': '↩', 'system': 'ℹ', 'pwd_reset': '🔑', 'info': '📋', 'new_registration': '👤'
         }[n.type] || '🔔';
         let actionHtml = '';
-        if ((n.type === 'new_registration' || n.type === 'delete_request') && isAdmin) {
+        if (n.type === 'new_registration' && isAdmin) {
           if (n.actionTaken === 'approved') {
             actionHtml = `<div style="margin-top:7px;"><span style="font-size:11px;color:#16a34a;font-weight:700;background:#dcfce7;padding:3px 10px;border-radius:20px;">✔ Approved</span></div>`;
           } else if (n.actionTaken === 'rejected') {
@@ -5534,7 +6131,7 @@
           'new_registration': '👤'
         }[n.type] || '🔔';
         let actionHtml = '';
-        if ((n.type === 'new_registration' || n.type === 'delete_request') && isAdmin) {
+        if (n.type === 'new_registration' && isAdmin) {
           if (n.actionTaken === 'approved') {
             actionHtml = `<div style="margin-top:7px;"><span style="font-size:11px;color:#16a34a;font-weight:700;background:#dcfce7;padding:3px 10px;border-radius:20px;">✔ Approved</span></div>`;
           } else if (n.actionTaken === 'rejected') {
@@ -5836,8 +6433,8 @@
       // Password reset token check করা
       checkResetToken();
 
-      // Auto-login from session
-      const sid = DB.g('ji_sess', null);
+      // Auto-login from session (sessionStorage only — tab/browser বন্ধ হলে logout)
+      const sid = sessionStorage.getItem('ji_sess');
       if (sid) {
         const u = getUsers().find(x => x.uid === sid);
         if (u && u.status === 'active') { CU = u; launchApp(); return; }
@@ -5857,9 +6454,20 @@
       if (!CU) return;
       closeUD();
       document.getElementById('pf_uid').textContent = CU.uid;
+      // Admin email section show/hide
+      const adminEmailSec = document.getElementById('adminEmailSection');
+      if (adminEmailSec) {
+        if (CU.role === 'admin') {
+          adminEmailSec.style.display = 'block';
+          document.getElementById('pf_adminemail').value = CU.email || '';
+        } else {
+          adminEmailSec.style.display = 'none';
+        }
+      }
       document.getElementById('pf_branch').textContent = CU.branch || '—';
       document.getElementById('pf_role').textContent = CU.role === 'admin' ? '🔴 Admin' : '🔵 User';
       document.getElementById('pf_name').value = CU.name || '';
+      const pfEmail = document.getElementById('pf_email'); if(pfEmail) pfEmail.value = CU.email || '';
       document.getElementById('pf_curpwd').value = '';
       document.getElementById('pf_newpwd').value = '';
       document.getElementById('pf_confirmpwd').value = '';
@@ -5870,6 +6478,20 @@
     function closeProfileModal() {
       document.getElementById('profileDim').style.display = 'none';
       document.getElementById('profileModal').style.display = 'none';
+    }
+
+
+    async function saveProfileEmail() {
+      const newEmail = document.getElementById('pf_email')?.value?.trim();
+      if (!newEmail || !newEmail.includes('@')) { toast('Valid email দিন।', 'e'); return; }
+      if (newEmail === CU.email) { toast('Email একই আছে।', 'w'); return; }
+      // Email already used কিনা check
+      const existing = getUsers().find(u => u.uid !== CU.uid && u.email === newEmail);
+      if (existing) { toast('এই email অন্য account এ ব্যবহার হচ্ছে।', 'e'); return; }
+      CU.email = newEmail;
+      await upsertUser(CU);
+      addAudit(CU.uid, 'PROFILE_EMAIL', 'Email updated to: ' + newEmail);
+      toast('✅ Email আপডেট হয়েছে: ' + newEmail, 's');
     }
 
     async function saveProfileName() {
@@ -5912,11 +6534,12 @@
   <div id="profileDim" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:8000;"
     onclick="closeProfileModal()"></div>
   <div id="profileModal"
-    style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:12px;padding:28px 28px 22px;width:370px;max-width:95vw;z-index:8001;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:12px;width:390px;max-width:95vw;max-height:90vh;overflow-y:auto;z-index:8001;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+    <div style="padding:22px 24px 0;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
       <div style="font-size:17px;font-weight:800;color:#1a3c5e;">👤 My Profile</div>
       <button onclick="closeProfileModal()"
-        style="background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8;line-height:1;">×</button>
+        style="background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8;line-height:1;position:sticky;top:0;">×</button>
     </div>
     <div style="background:#f0f4f8;border-radius:8px;padding:12px 15px;margin-bottom:18px;font-size:13px;">
       <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
@@ -5932,17 +6555,37 @@
         <span id="pf_role" style="font-weight:700;color:#1a3c5e;"></span>
       </div>
     </div>
-    <div style="margin-bottom:14px;">
+    <div style="margin-bottom:10px;">
       <label
         style="font-size:10.5px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:4px;">Display
         Name</label>
       <input type="text" id="pf_name" placeholder="Your name"
         style="width:100%;border:1.5px solid #e2e8f0;border-radius:6px;padding:9px 12px;font-size:13.5px;font-family:Arial,sans-serif;color:#0f172a;background:#f8fafc;">
     </div>
+    <div style="margin-bottom:14px;">
+      <label
+        style="font-size:10.5px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:4px;">Email Address</label>
+      <div style="display:flex;gap:6px;">
+        <input type="email" id="pf_email" placeholder="your@email.com"
+          style="flex:1;border:1.5px solid #e2e8f0;border-radius:6px;padding:9px 12px;font-size:13px;font-family:Arial,sans-serif;color:#0f172a;background:#f8fafc;">
+        <button onclick="saveProfileEmail()" style="background:#0369a1;color:white;border:none;border-radius:6px;padding:9px 13px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">💾 Save</button>
+      </div>
+      <div style="font-size:11px;color:#64748b;margin-top:4px;">⚠ Password reset এই email এ পাঠানো হবে।</div>
+    </div>
     <button onclick="saveProfileName()"
       style="width:100%;background:#1a3c5e;color:white;border:none;border-radius:6px;padding:10px;font-size:13.5px;font-weight:700;cursor:pointer;margin-bottom:18px;">
       💾 Save Name
     </button>
+    <!-- Admin Email Section -->
+    <div id="adminEmailSection" style="display:none;margin-bottom:14px;">
+      <label style="font-size:10.5px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:4px;">Admin Recovery Email</label>
+      <div style="display:flex;gap:6px;">
+        <input type="email" id="pf_adminemail" placeholder="admin@example.com"
+          style="flex:1;border:1.5px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;font-family:Arial,sans-serif;">
+        <button onclick="saveAdminEmail()" style="background:#0369a1;color:white;border:none;border-radius:6px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">💾 Save</button>
+      </div>
+      <div style="font-size:11px;color:#64748b;margin-top:5px;">⚠ এই email এ password reset link পাঠানো হবে।</div>
+    </div>
     <hr style="border:none;border-top:1px solid #e2e8f0;margin-bottom:18px;">
     <div style="font-size:13px;font-weight:700;color:#1a3c5e;margin-bottom:12px;">🔒 Change Password</div>
     <div style="margin-bottom:10px;">
@@ -5970,39 +6613,38 @@
       style="width:100%;background:#16a34a;color:white;border:none;border-radius:6px;padding:10px;font-size:13.5px;font-weight:700;cursor:pointer;">
       🔐 Update Password
     </button>
+    </div><!-- /inner padding -->
+    <div style="height:20px;"></div><!-- bottom spacer -->
   </div>
 
 
   <!-- ═══════════ SUPPORT CHAT ═══════════ -->
-  <div id="chatPanel" style="display:none;position:fixed;bottom:0;right:20px;width:340px;height:460px;background:white;border-radius:12px 12px 0 0;box-shadow:0 -4px 30px rgba(0,0,0,.18);z-index:9999;display:none;flex-direction:column;overflow:hidden;border:1px solid #e2e8f0;">
+  <div id="chatPanel" style="display:none;position:fixed;bottom:0;right:20px;width:340px;height:480px;background:white;border-radius:12px 12px 0 0;box-shadow:0 -4px 30px rgba(0,0,0,.22);z-index:10002;flex-direction:column;overflow:hidden;border:1px solid #e2e8f0;">
     <!-- Header -->
-    <div style="background:var(--c1);padding:11px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+    <div style="background:var(--c1);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
       <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-size:16px;">💬</span>
+        <button id="chatBackBtn" onclick="chatBackToList()" style="display:none;background:rgba(255,255,255,.2);border:none;color:white;border-radius:5px;padding:2px 8px;cursor:pointer;font-size:13px;margin-right:2px;">←</button>
+        <span style="font-size:15px;">💬</span>
         <div>
           <div style="font-size:13px;font-weight:700;color:white;" id="chatPanelTitle">Support Chat</div>
           <div style="font-size:10px;color:rgba(255,255,255,.75);" id="chatPanelSub">Admin এর সাথে কথা বলুন</div>
         </div>
       </div>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <div id="chatOnlineDot" style="width:8px;height:8px;background:#4ade80;border-radius:50%;"></div>
-        <button onclick="closeSupportChat()" style="background:rgba(255,255,255,.2);border:none;color:white;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px;">✕</button>
+      <button onclick="closeSupportChat()" style="background:rgba(255,255,255,.2);border:none;color:white;border-radius:6px;padding:3px 9px;cursor:pointer;font-size:13px;">✕</button>
+    </div>
+
+    <!-- Admin: User List View -->
+    <div id="chatUserListView" style="display:none;flex:1;overflow-y:auto;background:#f8fafc;min-height:0;"></div>
+
+    <!-- Chat View (messages + input) -->
+    <div id="chatView" style="display:none;flex:1;flex-direction:column;min-height:0;overflow:hidden;">
+      <div id="chatMessages" style="flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px;background:#f8fafc;min-height:0;"></div>
+      <div style="padding:10px 12px;border-top:1px solid #e2e8f0;background:white;flex-shrink:0;display:flex;gap:7px;align-items:flex-end;">
+        <textarea id="chatInput" placeholder="Message লিখুন..." rows="2"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMsg();}"
+          style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:12.5px;font-family:var(--f);resize:none;color:var(--txt);background:#f8fafc;"></textarea>
+        <button onclick="sendChatMsg()" style="background:var(--c1);color:white;border:none;border-radius:8px;padding:8px 13px;font-size:15px;cursor:pointer;flex-shrink:0;">➤</button>
       </div>
-    </div>
-    <!-- Admin: user selector -->
-    <div id="chatAdminUserBar" style="display:none;padding:8px 12px;border-bottom:1px solid #e2e8f0;background:#f8fafc;">
-      <select id="chatUserSelect" onchange="switchChatUser(this.value)" style="width:100%;font-size:12.5px;padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;background:white;color:var(--txt);">
-        <option value="">-- User select করুন --</option>
-      </select>
-    </div>
-    <!-- Messages -->
-    <div id="chatMessages" style="flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px;background:#f8fafc;min-height:0;"></div>
-    <!-- Input -->
-    <div style="padding:10px 12px;border-top:1px solid #e2e8f0;background:white;flex-shrink:0;display:flex;gap:7px;align-items:flex-end;">
-      <textarea id="chatInput" placeholder="Message লিখুন..." rows="2"
-        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMsg();}"
-        style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:12.5px;font-family:var(--f);resize:none;color:var(--txt);background:#f8fafc;"></textarea>
-      <button onclick="sendChatMsg()" style="background:var(--c1);color:white;border:none;border-radius:8px;padding:8px 13px;font-size:15px;cursor:pointer;flex-shrink:0;">➤</button>
     </div>
   </div>
 </body>
