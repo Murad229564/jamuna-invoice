@@ -2324,6 +2324,7 @@
                 <option>Cash Customer</option>
                 <option>Credit Customer</option>
                 <option>Wholesale Customer</option>
+                <option>GP Star Customer</option>
               </select>
             </div>
           </div>
@@ -2910,6 +2911,22 @@
     let _cache = { users: [], invs: [], reqs: [] };
 
     /* ── USERS ── */
+    let _usersUnsub = null;
+    function startUsersListener() {
+      if (_usersUnsub) return;
+      _usersUnsub = _fdb.collection('ji_users')
+        .onSnapshot(snap => {
+          _cache.users = snap.docs.map(d => ({ ...d.data() }));
+          // Admin panel open থাকলে refresh
+          if (document.getElementById('page-admin')?.classList.contains('on')) {
+            renderAdmin();
+            if (document.getElementById('admSection0')?.style.display !== 'none') renderAdmUsers();
+          }
+        }, e => console.warn('Users listener error:', e));
+    }
+    function stopUsersListener() {
+      if (_usersUnsub) { _usersUnsub(); _usersUnsub = null; }
+    }
     async function loadUsers() {
       const snap = await _fdb.collection('ji_users').get();
       _cache.users = snap.docs.map(d => ({ ...d.data() }));
@@ -2932,12 +2949,34 @@
       _cache.users = _cache.users.filter(x => x.uid !== uid);
     }
 
-    /* ── INVOICES ── */
+    /* ── INVOICES — Realtime ── */
+    let _invUnsub = null;
+
     async function loadInvs() {
       const snap = await _fdb.collection('ji_invoices').orderBy('savedAt', 'desc').get();
       _cache.invs = snap.docs.map(d => ({ ...d.data() }));
       return _cache.invs;
     }
+
+    function startInvListener() {
+      if (_invUnsub) return;
+      _invUnsub = _fdb.collection('ji_invoices').orderBy('savedAt', 'desc')
+        .onSnapshot(snap => {
+          _cache.invs = snap.docs.map(d => ({ ...d.data() }));
+          // History page open থাকলে auto-refresh
+          if (document.getElementById('page-history')?.classList.contains('on')) renderHist();
+          // Admin all invoices open থাকলে auto-refresh
+          if (document.getElementById('admSection2')?.style.display !== 'none'
+              && document.getElementById('page-admin')?.classList.contains('on')) renderAdmInvs();
+          // Admin summary update
+          if (document.getElementById('page-admin')?.classList.contains('on')) renderAdmin();
+        }, e => console.warn('Inv listener error:', e));
+    }
+
+    function stopInvListener() {
+      if (_invUnsub) { _invUnsub(); _invUnsub = null; }
+    }
+
     function getInvs() { return _cache.invs || []; }
     async function setInv(inv) {
       await _fdb.collection('ji_invoices').doc(inv.invNo).set(inv, { merge: true });
@@ -2985,43 +3024,87 @@
 
     /* ── SETTINGS (shared branch info) ── */
     async function loadSharedSettings() {
+      if (!CU) return;
+      const docId = CU.uid; // প্রতিটি user এর নিজস্ব doc
+      const uKey = docId;
+      const isAdmin = CU.role === 'admin';
+
+      // Default values — registration থেকে অথবা admin default
+      const defaults = isAdmin ? {
+        branch: 'Head Office',
+        addr: 'Head Office, Jamuna Electronics & Automobiles.',
+        mobile: '01680801331',
+        prefix: 'SI-HQ-',
+        lastno: 123735,
+        approved: 'Administrator'
+      } : {
+        branch: CU.branch || '',
+        addr: CU.addr || '',
+        mobile: CU.mobile || '',
+        prefix: 'SI-' + (CU.uid||'USR').toUpperCase().slice(0,3) + '-',
+        lastno: 100001,
+        approved: CU.name || ''
+      };
+
       try {
-        const d = await _fdb.collection('ji_settings').doc('main').get();
+        const d = await _fdb.collection('ji_settings').doc(docId).get();
         if (d.exists) {
+          // Firestore এ settings আছে — load করো
           const s = d.data();
-          // Branch info
-          if (s.branch) localStorage.setItem('inv_branch', s.branch);
-          if (s.addr) localStorage.setItem('inv_addr', s.addr);
-          if (s.mobile) localStorage.setItem('inv_mobile', s.mobile);
-          // Invoice number settings
-          if (s.invoicePrefix) localStorage.setItem('inv_prefix', s.invoicePrefix);
-          if (s.approvedBy) localStorage.setItem('inv_approved', s.approvedBy);
-          // Invoice counter — Firestore এ যেটা বড় সেটা নেব
-          if (s.lastInvoiceNo) {
-            const localNo = parseInt(localStorage.getItem('inv_lastno') || '0');
-            const firestoreNo = parseInt(s.lastInvoiceNo);
-            if (firestoreNo > localNo) {
-              localStorage.setItem('inv_lastno', firestoreNo);
-            }
-          }
+          localStorage.setItem('inv_' + uKey + '_branch',   s.branch   || defaults.branch);
+          localStorage.setItem('inv_' + uKey + '_addr',     s.addr     || defaults.addr);
+          localStorage.setItem('inv_' + uKey + '_mobile',   s.mobile   || defaults.mobile);
+          localStorage.setItem('inv_' + uKey + '_prefix',   s.invoicePrefix || defaults.prefix);
+          localStorage.setItem('inv_' + uKey + '_approved', s.approvedBy    || defaults.approved);
+          const firestoreNo = parseInt(s.lastInvoiceNo || defaults.lastno);
+          const localNo = parseInt(localStorage.getItem('inv_' + uKey + '_lastno') || '0');
+          localStorage.setItem('inv_' + uKey + '_lastno', Math.max(firestoreNo, localNo));
+        } else {
+          // Firestore এ নেই — registration data দিয়ে default settings create করো
+          const initData = {
+            branch: defaults.branch,
+            addr: defaults.addr,
+            mobile: defaults.mobile,
+            invoicePrefix: defaults.prefix,
+            approvedBy: defaults.approved,
+            lastInvoiceNo: defaults.lastno,
+            createdAt: new Date().toISOString(),
+            uid: CU.uid
+          };
+          await _fdb.collection('ji_settings').doc(docId).set(initData);
+          localStorage.setItem('inv_' + uKey + '_branch',   defaults.branch);
+          localStorage.setItem('inv_' + uKey + '_addr',     defaults.addr);
+          localStorage.setItem('inv_' + uKey + '_mobile',   defaults.mobile);
+          localStorage.setItem('inv_' + uKey + '_prefix',   defaults.prefix);
+          localStorage.setItem('inv_' + uKey + '_approved', defaults.approved);
+          localStorage.setItem('inv_' + uKey + '_lastno',   defaults.lastno);
         }
       } catch (e) { console.warn('Settings load failed', e); }
     }
+
     async function saveSharedSettings() {
+      if (!CU) return;
+      const docId = CU.uid;
+      const uKey = docId;
       try {
         const data = {
-          branch: document.getElementById('s_branch').value,
-          addr: document.getElementById('s_addr').value,
-          mobile: document.getElementById('s_mobile').value,
-          invoicePrefix: document.getElementById('s_prefix').value,
-          approvedBy: document.getElementById('s_approved').value,
-          lastInvoiceNo: parseInt(document.getElementById('s_lastno').value) || 123735,
+          branch: document.getElementById('s_branch')?.value || '',
+          addr:   document.getElementById('s_addr')?.value || '',
+          mobile: document.getElementById('s_mobile')?.value || '',
+          invoicePrefix: document.getElementById('s_prefix')?.value || '',
+          approvedBy: document.getElementById('s_approved')?.value || '',
+          lastInvoiceNo: parseInt(document.getElementById('s_lastno')?.value) || 100001,
           updatedAt: new Date().toISOString(),
-          updatedBy: CU?.uid || '?'
+          uid: CU.uid
         };
-        await _fdb.collection('ji_settings').doc('main').set(data, { merge: true });
+        await _fdb.collection('ji_settings').doc(docId).set(data, { merge: true });
+        localStorage.setItem('inv_' + uKey + '_branch',   data.branch);
+        localStorage.setItem('inv_' + uKey + '_addr',     data.addr);
+        localStorage.setItem('inv_' + uKey + '_mobile',   data.mobile);
+        localStorage.setItem('inv_' + uKey + '_prefix',   data.invoicePrefix);
+        localStorage.setItem('inv_' + uKey + '_approved', data.approvedBy);
+        localStorage.setItem('inv_' + uKey + '_lastno',   data.lastInvoiceNo);
       } catch (e) { console.warn('Settings save failed', e); }
-      // Sync indicator দেখাও
       const si = document.getElementById('settingsSyncStatus');
       if (si) { si.style.display = 'block'; setTimeout(() => si.style.display = 'none', 3000); }
     }
@@ -3460,6 +3543,8 @@
     function startChatBadgePoller() {
       if (!CU) return;
       if (_chatBadgeUnsub) { _chatBadgeUnsub(); _chatBadgeUnsub = null; }
+      stopUsersListener();
+      stopInvListener(); // Invoice listener বন্ধ করো
       const isAdmin = CU.role === 'admin';
       const badge = document.getElementById('chatBadge');
       if (!badge) return;
@@ -3538,20 +3623,10 @@
       const atb = document.getElementById('adminTopBtn');
       if (atb) atb.style.display = isAdmin ? 'block' : 'none';
       if (isAdmin && document.getElementById('adminLink')) document.getElementById('adminLink').style.display = 'flex';
+      // User এর Firestore settings load করো (নতুন device এও কাজ করবে)
       await loadSharedSettings();
       applySettingsPermissions();
       loadSettings(); setToday();
-      // Firestore থেকে সর্বশেষ invoice number load করে দেখাও
-      try {
-        const settingsDoc = await _fdb.collection('ji_settings').doc('main').get();
-        if (settingsDoc.exists && settingsDoc.data().lastInvoiceNo) {
-          const firestoreNo = parseInt(settingsDoc.data().lastInvoiceNo);
-          const localNo = parseInt(localStorage.getItem('inv_lastno') || '123735');
-          const syncedNo = Math.max(firestoreNo, localNo);
-          localStorage.setItem('inv_lastno', syncedNo);
-          if (document.getElementById('s_lastno')) document.getElementById('s_lastno').value = syncedNo;
-        }
-      } catch (e) { console.warn('Could not sync invoice counter', e); }
       document.getElementById('invoiceNo').value = nextNo();
       // প্রথমে localStorage থেকে দেখাও (fast)
       try {
@@ -3565,7 +3640,9 @@
         const label = result.source === 'personal' ? 'Personal DB' : 'Admin Master DB';
         toast('Product DB loaded: ' + productDB.length + ' products (' + label + ')', 's', 2500);
       });
-      startNotifListener(); // realtime notification listener চালু করো
+      startNotifListener();  // realtime notification listener
+      startInvListener();    // realtime invoice listener — live update
+      startUsersListener();  // realtime users listener — live update
       // Import button label update
       const importLabel = document.getElementById('importExcelLabel');
       if (importLabel) {
@@ -3696,63 +3773,55 @@
     }
     function closeSettings() { document.getElementById('sPanel').classList.remove('open'); document.getElementById('sDim').classList.remove('on'); }
     async function saveSettings() {
-      const isAdmin = CU?.role === 'admin';
-      const uKey = isAdmin ? 'admin' : (CU?.uid || 'user');
-      // User-specific save
-      ['prefix', 'lastno', 'approved'].forEach(k => {
-        localStorage.setItem('inv_' + uKey + '_' + k, document.getElementById('s_' + k).value);
-        localStorage.setItem('inv_' + k, document.getElementById('s_' + k).value); // backward compat
+      if (!CU) return;
+      const uKey = CU.uid;
+      const isAdmin = CU.role === 'admin';
+      // সব user এর settings Firestore এ save হবে (cross-device sync)
+      await saveSharedSettings();
+      // localStorage এ cache
+      ['branch','addr','mobile','prefix','lastno','approved'].forEach(k => {
+        const el = document.getElementById('s_' + k);
+        if (el) localStorage.setItem('inv_' + uKey + '_' + k, el.value);
       });
-      if (isAdmin) {
-        ['branch', 'addr', 'mobile'].forEach(k => {
-          localStorage.setItem('inv_admin_' + k, document.getElementById('s_' + k).value);
-          localStorage.setItem('inv_' + k, document.getElementById('s_' + k).value);
-        });
-        await saveSharedSettings();
-        addAudit(CU.uid, 'SETTINGS', 'Admin updated settings');
-        toast('Settings saved & synced!', 's');
-      } else {
-        // User নিজের branch info save (readonly fields এ পরিবর্তন নেই, শুধু prefix/lastno/approved)
-        toast('Settings saved!', 's');
-      }
+      addAudit(CU.uid, 'SETTINGS', 'Settings updated');
+      toast('✅ Settings saved & synced!', 's');
       closeSettings();
       document.getElementById('invoiceNo').value = nextNo();
       updatePills();
     }
     function loadSettings() {
       const isAdmin = CU?.role === 'admin';
-      // User-specific key prefix — admin এর HQ, user এর নিজের
-      const uKey = isAdmin ? 'admin' : (CU?.uid || 'user');
+      const uKey = CU?.uid || (isAdmin ? 'admin' : 'user');
+      // Default values — user এর registration data থেকে
       const D = isAdmin ? {
         branch: 'Head Office', addr: 'Head Office, Jamuna Electronics & Automobiles.', mobile: '01680801331',
         prefix: 'SI-HQ-', lastno: '123735', approved: 'Administrator'
       } : {
-        branch: CU?.branch || '—', addr: '', mobile: '',
-        prefix: 'SI-' + (CU?.uid||'USR').toUpperCase().slice(0,3) + '-', lastno: '100001', approved: CU?.name || ''
+        branch: CU?.branch || '', addr: CU?.addr || '', mobile: CU?.mobile || '',
+        prefix: 'SI-' + (CU?.uid||'USR').toUpperCase().slice(0,3) + '-',
+        lastno: '100001', approved: CU?.name || ''
       };
-      // Admin এর fields editable, user এর branch fields readonly (unless own)
-      const branchFields = ['branch','addr','mobile'];
-      branchFields.forEach(k => {
+      // সব fields এ user-specific key দিয়ে load করো
+      ['branch','addr','mobile','prefix','lastno','approved'].forEach(k => {
         const el = document.getElementById('s_' + k);
-        if (el) {
-          const stored = localStorage.getItem('inv_' + uKey + '_' + k) || localStorage.getItem('inv_' + k) || D[k];
-          el.value = stored;
-          el.readOnly = !isAdmin; // Admin freely editable; user readonly (request system)
-        }
+        if (!el) return;
+        // Priority: user-specific localStorage > generic localStorage > user object default
+        const val = localStorage.getItem('inv_' + uKey + '_' + k) || D[k];
+        el.value = val || '';
+        // Branch fields — user এর জন্য readonly নয় (user নিজে settings এ দেখতে পাবে)
+        el.readOnly = false;
       });
-      ['prefix','lastno','approved'].forEach(k => {
-        const el = document.getElementById('s_' + k);
-        if (el) el.value = localStorage.getItem('inv_' + uKey + '_' + k) || localStorage.getItem('inv_' + k) || D[k];
-      });
-      // Topbar pill
-      const branchVal = localStorage.getItem('inv_' + uKey + '_branch') || localStorage.getItem('inv_branch') || D.branch;
+      // Topbar branch pill update
+      const branchVal = localStorage.getItem('inv_' + uKey + '_branch') || D.branch || '';
       const pb = document.getElementById('pillBranch');
       if (pb) pb.textContent = branchVal;
     }
     const gs = k => {
-      // User-specific setting আগে দেখো, না থাকলে shared
-      const uKey = (CU?.role === 'admin') ? 'admin' : (CU?.uid || 'user');
-      return localStorage.getItem('inv_' + uKey + '_' + k) || localStorage.getItem('inv_' + k) || (document.getElementById('s_' + k) || {}).value || '';
+      const uKey = CU?.uid || (CU?.role === 'admin' ? 'admin' : 'user');
+      // Priority: user-specific key → settings field value → empty
+      return localStorage.getItem('inv_' + uKey + '_' + k)
+          || (document.getElementById('s_' + k) || {}).value
+          || '';
     };
 
     function openReqModal(field) {
@@ -5857,9 +5926,16 @@
           localStorage.setItem('inv_' + uid + '_addr', addr);
           localStorage.setItem('inv_' + uid + '_mobile', mobile);
           localStorage.setItem('inv_' + uid + '_prefix', prefix);
-          // User object এও branch update করো
-          u.branch = branch;
+          // User object update
+          u.branch = branch; u.addr = addr; u.mobile = mobile;
           await upsertUser(u);
+          // Firestore settings doc এও save — যেকোনো device থেকে পাবে
+          try {
+            await _fdb.collection('ji_settings').doc(uid).set({
+              branch, addr, mobile, invoicePrefix: prefix,
+              updatedAt: new Date().toISOString(), updatedBy: CU.uid
+            }, { merge: true });
+          } catch(e) { console.warn('Branch save failed', e); }
           addAudit(CU.uid, 'USER_BRANCH_SET', 'Set branch info for ' + uid + ': ' + branch);
           toast('✅ ' + uid + ' এর branch info saved!', 's');
         }
@@ -5873,13 +5949,24 @@
       if (x) {
         x.status = 'active';
         await upsertUser(x);
-        // User এর branch info localStorage এ set করো (যদি registration এ দেওয়া থাকে)
-        if (x.branch) localStorage.setItem('inv_' + uid + '_branch', x.branch);
-        if (x.addr) localStorage.setItem('inv_' + uid + '_addr', x.addr);
-        if (x.mobile) localStorage.setItem('inv_' + uid + '_mobile', x.mobile);
+        // User এর branch info Firestore settings doc এ save করো
+        // যাতে যেকোনো device থেকে login করলে ঠিক data পায়
+        const userSettings = {
+          branch: x.branch || '',
+          addr:   x.addr   || '',
+          mobile: x.mobile || '',
+          invoicePrefix: 'SI-' + uid.toUpperCase().slice(0,3) + '-',
+          approvedBy: x.name || uid,
+          lastInvoiceNo: 100001,
+          updatedAt: new Date().toISOString(),
+          updatedBy: CU.uid
+        };
+        try {
+          await _fdb.collection('ji_settings').doc(uid).set(userSettings, { merge: true });
+        } catch(e) { console.warn('User settings save failed', e); }
         addAudit(CU.uid, 'USER_APPROVE', uid + ' approved');
         renderAdmUsers(); renderAdmin();
-        toast(uid + ' approved.', 's');
+        toast('✅ ' + uid + ' approved!', 's');
       }
     }
 
